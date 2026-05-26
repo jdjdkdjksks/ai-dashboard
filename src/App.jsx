@@ -5,15 +5,83 @@ import {
 } from 'recharts';
 import { 
   Activity, Mail, Wrench, Link as LinkIcon, Sparkles, 
-  Settings, PieChart as PieChartIcon, CheckCircle, Info
+  Settings, PieChart as PieChartIcon, CheckCircle, Info, Lock, User
 } from 'lucide-react';
+import { CUSTOMERS } from './customers';
 import './index.css';
-
-const N8N_WEBHOOK_URL = 'https://n8n.autoflow-ai.de/webhook/19fdc866-0908-4687-8bc4-01a6067ccec0';
 
 const COLORS = ['#6366f1', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#06b6d4'];
 
+function LoginForm({ onLogin }) {
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const customer = CUSTOMERS[username];
+    
+    if (customer && customer.password === password) {
+      onLogin(customer);
+    } else {
+      setError('Ungültiger Benutzername oder Passwort');
+    }
+  };
+
+  return (
+    <div className="login-container">
+      <div className="login-box glass-panel animate-fade-in">
+        <div className="brand" style={{ justifyContent: 'center', marginBottom: '24px' }}>
+          <div className="brand-icon">
+            <Sparkles size={20} color="#fff" />
+          </div>
+          AutoFlow AI
+        </div>
+        <h2 style={{ marginBottom: '8px' }}>Willkommen zurück</h2>
+        <p className="text-muted mb-8">Bitte loggen Sie sich ein, um auf Ihr Dashboard zuzugreifen.</p>
+        
+        {error && <div className="error-message">{error}</div>}
+        
+        <form onSubmit={handleSubmit}>
+          <div style={{ position: 'relative', marginBottom: '16px' }}>
+            <User size={18} style={{ position: 'absolute', left: '12px', top: '12px', color: 'var(--text-muted)' }} />
+            <input 
+              type="text" 
+              className="login-input" 
+              placeholder="Benutzername" 
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              style={{ paddingLeft: '40px' }}
+              required
+            />
+          </div>
+          <div style={{ position: 'relative', marginBottom: '24px' }}>
+            <Lock size={18} style={{ position: 'absolute', left: '12px', top: '12px', color: 'var(--text-muted)' }} />
+            <input 
+              type="password" 
+              className="login-input" 
+              placeholder="Passwort" 
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              style={{ paddingLeft: '40px' }}
+              required
+            />
+          </div>
+          <button type="submit" className="login-button">
+            Einloggen
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 function App() {
+  const [currentUser, setCurrentUser] = useState(() => {
+    const saved = localStorage.getItem('currentUser');
+    return saved ? JSON.parse(saved) : null;
+  });
+  
   const [logs, setLogs] = useState([]);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [loading, setLoading] = useState(false);
@@ -21,12 +89,23 @@ function App() {
   const [errorDetails, setErrorDetails] = useState('');
   const [lastUpdate, setLastUpdate] = useState(new Date().toLocaleTimeString('de-DE'));
   
+  const handleLogin = (user) => {
+    setCurrentUser(user);
+    localStorage.setItem('currentUser', JSON.stringify(user));
+  };
+
+  const handleLogout = () => {
+    setCurrentUser(null);
+    localStorage.removeItem('currentUser');
+    setLogs([]);
+  };
+
   const fetchLogs = async () => {
-    if (!N8N_WEBHOOK_URL) return;
+    if (!currentUser || !currentUser.webhook) return;
 
     setLoading(true);
     try {
-      const response = await fetch(N8N_WEBHOOK_URL);
+      const response = await fetch(currentUser.webhook);
       if (!response.ok) {
          throw new Error(`HTTP Status ${response.status}`);
       }
@@ -37,7 +116,7 @@ function App() {
         rows = data;
       } else if (typeof data === 'object' && data !== null) {
         if (data.data && Array.isArray(data.data)) {
-            rows = data.data; // Falls es in { data: [...] } gewrapped ist
+            rows = data.data; 
         } else {
             rows = [data]; 
         }
@@ -55,7 +134,6 @@ function App() {
               dateStr = dateObj.toLocaleDateString('de-DE');
               timeStr = dateObj.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
             } else {
-              // Falls es z.B. nur "14:54:06" ist
               timeStr = zeitStr;
             }
           }
@@ -78,7 +156,7 @@ function App() {
         setErrorDetails('');
       } else {
         setError('Keine Reihen gefunden.');
-        setErrorDetails('Die empfangenen Daten waren leer oder in einem unerwarteten Format: ' + JSON.stringify(data).substring(0, 100));
+        setErrorDetails('Die empfangenen Daten waren leer oder in einem unerwarteten Format.');
       }
       setLoading(false);
       setLastUpdate(new Date().toLocaleTimeString('de-DE'));
@@ -91,10 +169,16 @@ function App() {
   };
 
   useEffect(() => {
-    fetchLogs();
-    const interval = setInterval(fetchLogs, 15000);
-    return () => clearInterval(interval);
-  }, []);
+    if (currentUser) {
+      fetchLogs();
+      const interval = setInterval(fetchLogs, 15000);
+      return () => clearInterval(interval);
+    }
+  }, [currentUser]);
+
+  if (!currentUser) {
+    return <LoginForm onLogin={handleLogin} />;
+  }
 
   const pathDistribution = logs.reduce((acc, log) => {
     const existing = acc.find(item => item.name === log.category);
@@ -104,7 +188,6 @@ function App() {
   }, []);
   pathDistribution.sort((a, b) => b.value - a.value);
 
-  // Link-Status Verteilung für Pie Chart
   const linkDistribution = logs.reduce((acc, log) => {
     let stat = 'Info (Kein Link)';
     if (log.linkStatus.toLowerCase() === 'nein') stat = 'Ausstehend';
@@ -127,7 +210,7 @@ function App() {
           AutoFlow AI
         </div>
         
-        <nav>
+        <nav style={{ flex: 1 }}>
           <div 
             className={`nav-item ${activeTab === 'dashboard' ? 'active' : ''}`}
             onClick={() => setActiveTab('dashboard')}
@@ -143,14 +226,19 @@ function App() {
             <span>Live Logs</span>
           </div>
         </nav>
+
+        <div className="nav-item" onClick={handleLogout} style={{ marginTop: 'auto', color: 'var(--danger)' }}>
+          <Lock size={20} />
+          <span>Abmelden</span>
+        </div>
       </aside>
 
       {/* Main Content */}
       <main className="main-content">
         <header className="flex justify-between items-center mb-8 animate-fade-in">
           <div>
-            <h1 className="text-gradient">Posteingang KI System</h1>
-            <p className="text-muted">Live-Auswertung der automatisierten E-Mails</p>
+            <h1 className="text-gradient">Dashboard: {currentUser.name}</h1>
+            <p className="text-muted">Live-Auswertung Ihrer automatisierten E-Mails</p>
           </div>
           <div className="flex items-center gap-4">
             {error && (
