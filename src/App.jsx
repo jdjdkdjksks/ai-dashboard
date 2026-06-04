@@ -87,8 +87,11 @@ function FeedbackForm({ currentUser }) {
     const webhookUrl = currentUser.feedbackWebhook || 'https://n8n.autoflow-ai.de/webhook/feedback-general';
 
     try {
-      const response = await fetch(webhookUrl, {
+      // Wir verwenden 'no-cors', da n8n Webhooks oft keine CORS-Header senden
+      // und wir nur wollen, dass die Daten dort ankommen.
+      await fetch(webhookUrl, {
         method: 'POST',
+        mode: 'no-cors',
         headers: {
           'Content-Type': 'application/json',
         },
@@ -99,10 +102,6 @@ function FeedbackForm({ currentUser }) {
           source: 'Dashboard Feedback'
         }),
       });
-
-      if (!response.ok) {
-        throw new Error('Fehler beim Senden des Feedbacks');
-      }
 
       setLoading(false);
       setSubmitted(true);
