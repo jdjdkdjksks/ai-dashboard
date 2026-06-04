@@ -4,13 +4,12 @@ import {
   PieChart, Pie, Cell
 } from 'recharts';
 import { 
-  Activity, Mail, Wrench, Link as LinkIcon, Sparkles, 
-  Settings, PieChart as PieChartIcon, CheckCircle, Info, Lock, User, Clock
+  Activity, Mail, Wrench, Sparkles, 
+  CheckCircle, Lock, User, Clock,
+  MessageSquare, Send, PieChart as PieChartIcon
 } from 'lucide-react';
 import { CUSTOMERS } from './customers';
 import './index.css';
-
-const COLORS = ['#6366f1', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#06b6d4'];
 
 function LoginForm({ onLogin }) {
   const [username, setUsername] = useState('');
@@ -76,6 +75,102 @@ function LoginForm({ onLogin }) {
   );
 }
 
+function FeedbackForm({ currentUser }) {
+  const [feedback, setFeedback] = useState('');
+  const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+
+    const webhookUrl = currentUser.feedbackWebhook || 'https://n8n.autoflow-ai.de/webhook/feedback-general';
+
+    try {
+      const response = await fetch(webhookUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          customer: currentUser.name,
+          feedback: feedback,
+          timestamp: new Date().toISOString(),
+          source: 'Dashboard Feedback'
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Fehler beim Senden des Feedbacks');
+      }
+
+      setLoading(false);
+      setSubmitted(true);
+      setFeedback('');
+    } catch (err) {
+      console.error('Feedback Error:', err);
+      setError('Konnte Feedback nicht senden. Bitte versuche es später erneut.');
+      setLoading(false);
+    }
+  };
+
+  if (submitted) {
+    return (
+      <div className="glass-panel animate-fade-in" style={{ textAlign: 'center', padding: '48px' }}>
+        <div style={{ 
+          width: '64px', height: '64px', background: 'rgba(16, 185, 129, 0.1)', 
+          borderRadius: '50%', display: 'flex', alignItems: 'center', 
+          justifyContent: 'center', margin: '0 auto 24px', color: 'var(--success)'
+        }}>
+          <CheckCircle size={32} />
+        </div>
+        <h2 style={{ marginBottom: '12px' }}>Vielen Dank!</h2>
+        <p className="text-muted mb-8">Dein Feedback wurde erfolgreich übermittelt. Wir schätzen deine Meinung sehr.</p>
+        <button 
+          className="login-button" 
+          style={{ maxWidth: '200px', margin: '0 auto' }}
+          onClick={() => setSubmitted(false)}
+        >
+          Weiteres Feedback
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="glass-panel animate-fade-in">
+      <h3 style={{ marginBottom: '8px' }}>Feedback geben</h3>
+      <p className="text-muted mb-8">Wie können wir das Dashboard für dich verbessern? Schreib uns deine Meinung, Wünsche oder Fehlerberichte.</p>
+      
+      {error && <div className="error-message" style={{ marginBottom: '16px' }}>{error}</div>}
+
+      <form onSubmit={handleSubmit}>
+        <div style={{ marginBottom: '24px' }}>
+          <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem', color: 'var(--text-muted)' }}>Deine Nachricht</label>
+          <textarea 
+            className="login-input" 
+            style={{ minHeight: '150px', resize: 'vertical', paddingTop: '12px' }}
+            placeholder="Schreib hier dein Feedback..."
+            value={feedback}
+            onChange={(e) => setFeedback(e.target.value)}
+            required
+          ></textarea>
+        </div>
+        <button type="submit" className="login-button" disabled={loading} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+          {loading ? 'Wird gesendet...' : (
+            <>
+              <Send size={18} />
+              Feedback senden
+            </>
+          )}
+        </button>
+      </form>
+    </div>
+  );
+}
+
 function App() {
   const [currentUser, setCurrentUser] = useState(() => {
     const saved = localStorage.getItem('currentUser');
@@ -89,6 +184,7 @@ function App() {
   const [errorDetails, setErrorDetails] = useState('');
   const [lastUpdate, setLastUpdate] = useState(new Date().toLocaleTimeString('de-DE'));
   const [expandedRows, setExpandedRows] = useState({});
+  const [showAllLogs, setShowAllLogs] = useState(false);
   
   const toggleRow = (id) => {
     setExpandedRows(prev => ({
@@ -208,18 +304,6 @@ function App() {
   }, []);
   pathDistribution.sort((a, b) => b.value - a.value);
 
-  // Split customer actions into Werkstatt (Termin-Link gesendet) and Verkauf (Rückruf initiiert)
-  const actionDistribution = [
-    { 
-      name: 'Termin-Link gesendet (Werkstatt)', 
-      value: logs.filter(l => l.category === 'werkstatt' && l.linkStatus && l.linkStatus.toLowerCase() !== 'nein').length 
-    },
-    { 
-      name: 'Telefonischer Rückruf initiiert (Verkauf)', 
-      value: logs.filter(l => l.category === 'verkauf').length 
-    }
-  ];
-
   // Split total incoming emails into Filtered, Werkstatt, and Verkauf
   const totalMailsDistribution = [
     { 
@@ -273,6 +357,13 @@ function App() {
           >
             <Activity size={20} />
             <span>Live Logs</span>
+          </div>
+          <div 
+            className={`nav-item ${activeTab === 'feedback' ? 'active' : ''}`}
+            onClick={() => setActiveTab('feedback')}
+          >
+            <MessageSquare size={20} />
+            <span>Feedback</span>
           </div>
         </nav>
 
@@ -360,7 +451,7 @@ function App() {
                   </div>
                 </div>
                 <div style={{ fontSize: '2rem', fontWeight: '700', color: '#fff', lineHeight: '1.2', marginTop: '16px' }}>
-                  {actionDistribution.reduce((sum, item) => sum + item.value, 0)}
+                  {logs.filter(l => l.category === 'werkstatt' || l.category === 'verkauf').length}
                 </div>
               </div>
 
@@ -451,16 +542,29 @@ function App() {
           </div>
         )}
 
+        {activeTab === 'feedback' && (
+          <FeedbackForm currentUser={currentUser} />
+        )}
+
         <div className="glass-panel animate-fade-in" style={{ animationDelay: '0.2s', marginTop: activeTab === 'logs' ? '0' : '32px', display: activeTab === 'dashboard' || activeTab === 'logs' ? 'block' : 'none' }}>
           <div className="flex justify-between items-center mb-4">
-            <h3>Letzte E-Mail Eingänge</h3>
-            <button style={{
-              background: 'transparent', border: '1px solid var(--border)', 
-              color: '#fff', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer',
-              transition: 'all 0.2s'
-            }} onClick={fetchLogs}>
-              Manuell Aktualisieren
-            </button>
+            <h3>{activeTab === 'logs' ? 'Alle Logs' : 'Letzte E-Mail Eingänge'}</h3>
+            <div className="flex gap-2">
+              <button style={{
+                background: 'transparent', border: '1px solid var(--border)', 
+                color: '#fff', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer',
+                transition: 'all 0.2s'
+              }} onClick={() => setShowAllLogs(!showAllLogs)}>
+                {showAllLogs ? 'Weniger anzeigen' : 'Alle Mails anzeigen'}
+              </button>
+              <button style={{
+                background: 'transparent', border: '1px solid var(--border)', 
+                color: '#fff', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer',
+                transition: 'all 0.2s'
+              }} onClick={fetchLogs}>
+                Manuell Aktualisieren
+              </button>
+            </div>
           </div>
           
           <div className="table-container">
@@ -477,7 +581,7 @@ function App() {
                 {logs.length === 0 && !loading ? (
                   <tr><td colSpan="4" style={{textAlign: 'center', padding: '32px'}}>Keine Daten gefunden.</td></tr>
                 ) : (
-                  logs.slice(0, 50).map((log, idx) => {
+                  (showAllLogs ? logs : logs.slice(0, 50)).map((log, idx) => {
                     return (
                       <tr key={log.id || idx}>
                         <td>
