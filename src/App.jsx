@@ -84,15 +84,22 @@ function FeedbackForm({ currentUser }) {
     setLoading(true);
     setError(null);
 
-    const webhookUrl = currentUser.feedbackWebhook || 'https://n8n.autoflow-ai.de/webhook/feedback-general';
+    // Wir stellen sicher, dass wir nur die Webhook-URL des Kunden nutzen.
+    const webhookUrl = currentUser.feedbackWebhook;
+    
+    if (!webhookUrl) {
+      setError('Keine Feedback-URL konfiguriert.');
+      setLoading(false);
+      return;
+    }
 
     try {
       console.log('Sende Feedback an:', webhookUrl);
-      // WICHTIG: Wir nutzen 'text/plain' für den Content-Type.
-      // Das macht die Anfrage zu einer "Simple Request" und umgeht die CORS-Preflight (OPTIONS) Prüfung,
-      // die aktuell den Fehler verursacht. n8n empfängt den Body trotzdem.
+      // Wir nutzen eine sehr einfache Fetch-Methode, um CORS-Preflights zu vermeiden.
+      // mode: 'no-cors' macht die Anfrage zu einer "Simple Request" und umgeht die CORS-Prüfung.
       await fetch(webhookUrl, {
         method: 'POST',
+        mode: 'no-cors', 
         headers: {
           'Content-Type': 'text/plain',
         },
@@ -108,13 +115,13 @@ function FeedbackForm({ currentUser }) {
         }),
       });
 
-      console.log('Feedback-Daten wurden abgeschickt');
+      console.log('Feedback wurde erfolgreich abgeschickt');
       setLoading(false);
       setSubmitted(true);
       setFeedback('');
     } catch (err) {
       console.error('Detaillierter Feedback-Fehler:', err);
-      setError(`Senden fehlgeschlagen: ${err.message}. Bitte n8n-Workflow prüfen.`);
+      setError(`Senden fehlgeschlagen: ${err.message}`);
       setLoading(false);
     }
   };
