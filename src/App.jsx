@@ -87,18 +87,21 @@ function FeedbackForm({ currentUser }) {
     const webhookUrl = currentUser.feedbackWebhook || 'https://n8n.autoflow-ai.de/webhook/feedback-general';
 
     try {
-      // Wir senden es als text/plain, um eine CORS-Preflight-Anfrage (OPTIONS) zu vermeiden.
-      // n8n kann diesen Body trotzdem als JSON verarbeiten.
+      // Zurück zu application/json, damit n8n die Felder direkt einzeln erkennt.
       await fetch(webhookUrl, {
         method: 'POST',
         headers: {
-          'Content-Type': 'text/plain',
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          customer: currentUser.name,
-          feedback: feedback,
-          timestamp: new Date().toISOString(),
-          source: 'Dashboard Feedback'
+          kunde: currentUser.name,
+          nachricht: feedback,
+          zeitpunkt_formatiert: new Date().toLocaleString('de-DE', { 
+            day: '2-digit', month: '2-digit', year: 'numeric', 
+            hour: '2-digit', minute: '2-digit' 
+          }) + ' Uhr',
+          iso_timestamp: new Date().toISOString(),
+          system: 'AutoFlow AI Dashboard'
         }),
       });
 
