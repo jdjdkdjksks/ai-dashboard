@@ -228,19 +228,20 @@ function App() {
       
       if (rows.length > 0) {
         const parsedData = rows.map((row, i) => {
-          let dateStr = '';
-          let timeStr = '';
+          let fullTimestamp = 'Unbekannt';
           
           if (row.Zeit) {
             const zeitStr = String(row.Zeit);
+            // Wenn es ein ISO-String ist (enthält T), parsen wir ihn
             if (zeitStr.includes('T')) {
               const dateObj = new Date(zeitStr);
-              dateStr = dateObj.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
-              timeStr = dateObj.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+              const dateStr = dateObj.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+              const timeStr = dateObj.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+              fullTimestamp = `${dateStr} ${timeStr} Uhr`;
             } else {
-              // Fallback falls nur Zeit geliefert wird
-              timeStr = zeitStr;
-              dateStr = new Date().toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+              // Falls es ein anderer String ist, versuchen wir ihn zu bereinigen
+              // Falls nur die Uhrzeit kommt, nehmen wir das heutige Datum
+              fullTimestamp = `${new Date().toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })} ${zeitStr.substring(0, 5)} Uhr`;
             }
           }
 
@@ -249,7 +250,7 @@ function App() {
 
           return {
             id: row.row_number || i,
-            fullTimestamp: `${dateStr} ${timeStr} Uhr`,
+            fullTimestamp: fullTimestamp,
             category: (category || '').toString().toLowerCase(),
             summary: row.Kundenanliegen || row.Zusammenfassung || 'Keine Details',
             linkStatus: row['Link - versendet'] || ''
