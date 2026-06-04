@@ -232,16 +232,19 @@ function App() {
           
           if (row.Zeit) {
             const zeitStr = String(row.Zeit);
-            // Wenn es ein ISO-String ist (enthält T), parsen wir ihn
-            if (zeitStr.includes('T')) {
+            try {
+              // Wenn es ein ISO-String ist oder ein parbares Datum
               const dateObj = new Date(zeitStr);
-              const dateStr = dateObj.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
-              const timeStr = dateObj.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-              fullTimestamp = `${dateStr} ${timeStr} Uhr`;
-            } else {
-              // Falls es ein anderer String ist, versuchen wir ihn zu bereinigen
-              // Falls nur die Uhrzeit kommt, nehmen wir das heutige Datum
-              fullTimestamp = `${new Date().toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })} ${zeitStr.substring(0, 5)} Uhr`;
+              if (!isNaN(dateObj.getTime())) {
+                const d = dateObj.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                const t = dateObj.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+                fullTimestamp = `${d} ${t} Uhr`;
+              } else {
+                // Falls Date() scheitert, versuchen wir manuelles Splitting (falls Format HH:mm:ss oder ähnlich)
+                fullTimestamp = `${new Date().toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })} ${zeitStr.substring(0, 5)} Uhr`;
+              }
+            } catch (e) {
+              fullTimestamp = zeitStr;
             }
           }
 
