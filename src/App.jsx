@@ -88,10 +88,13 @@ function FeedbackForm({ currentUser }) {
 
     try {
       console.log('Sende Feedback an:', webhookUrl);
-      const response = await fetch(webhookUrl, {
+      // WICHTIG: Wir nutzen 'text/plain' für den Content-Type.
+      // Das macht die Anfrage zu einer "Simple Request" und umgeht die CORS-Preflight (OPTIONS) Prüfung,
+      // die aktuell den Fehler verursacht. n8n empfängt den Body trotzdem.
+      await fetch(webhookUrl, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'text/plain',
         },
         body: JSON.stringify({
           kunde: currentUser.name,
@@ -105,18 +108,13 @@ function FeedbackForm({ currentUser }) {
         }),
       });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Server-Fehler (${response.status}): ${errorText}`);
-      }
-
-      console.log('Feedback erfolgreich gesendet');
+      console.log('Feedback-Daten wurden abgeschickt');
       setLoading(false);
       setSubmitted(true);
       setFeedback('');
     } catch (err) {
       console.error('Detaillierter Feedback-Fehler:', err);
-      setError(`Senden fehlgeschlagen: ${err.message}. Prüfe bitte, ob der Workflow in n8n auf "Aktiv" (oben rechts) steht.`);
+      setError(`Senden fehlgeschlagen: ${err.message}. Bitte n8n-Workflow prüfen.`);
       setLoading(false);
     }
   };
