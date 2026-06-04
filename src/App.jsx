@@ -30,10 +30,10 @@ function LoginForm({ onLogin }) {
   return (
     <div className="login-container">
       <div className="login-box glass-panel animate-fade-in">
-        <div className="brand" style={{ justifyContent: 'center', marginBottom: '24px' }}>
-          <img src="/logo.png" alt="AutoFlow AI" style={{ height: '32px', width: 'auto' }} />
+        <a href="https://autoflow-ai.de" className="brand" style={{ justifyContent: 'center', marginBottom: '24px', textDecoration: 'none' }}>
+          <img src="/logo.png" alt="AutoFlow AI" style={{ height: '32px', width: 'auto', mixBlendMode: 'lighten' }} />
           AutoFlow AI
-        </div>
+        </a>
         <h2 style={{ marginBottom: '8px' }}>Willkommen zurück</h2>
         <p className="text-muted mb-8">Bitte loggen Sie sich ein, um auf Ihr Dashboard zuzugreifen.</p>
         
@@ -339,10 +339,10 @@ function App() {
     <div className="app-container">
       {/* Sidebar */}
       <aside className="sidebar">
-        <div className="brand">
-          <img src="/logo.png" alt="AutoFlow AI" style={{ height: '32px', width: 'auto' }} />
+        <a href="https://autoflow-ai.de" className="brand" style={{ textDecoration: 'none' }}>
+          <img src="/logo.png" alt="AutoFlow AI" style={{ height: '32px', width: 'auto', mixBlendMode: 'lighten' }} />
           AutoFlow AI
-        </div>
+        </a>
         
         <nav style={{ flex: 1 }}>
           <div 
@@ -405,7 +405,7 @@ function App() {
                   display: 'inline-block', 
                   boxShadow: `0 0 8px ${loading ? 'var(--warning)' : (error ? 'var(--danger)' : 'var(--success)')}`
                 }}></span>
-                {loading ? 'Aktualisiere...' : `Live ${lastUpdate}`}
+                {loading ? 'Aktualisiere...' : `Live ${lastUpdate} Uhr`}
               </span>
             </div>
           </div>
@@ -419,7 +419,7 @@ function App() {
                   <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                     E-Mails gesamt
                   </span>
-                  <div style={{ color: 'var(--primary)', background: 'rgba(99, 102, 241, 0.1)', width: '36px', height: '36px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <div style={{ color: 'var(--primary)', background: 'rgba(37, 99, 235, 0.1)', width: '36px', height: '36px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <Mail size={18} />
                   </div>
                 </div>
@@ -447,7 +447,7 @@ function App() {
                   <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                     Kunden-Aktionen
                   </span>
-                  <div style={{ color: 'var(--secondary)', background: 'rgba(139, 92, 246, 0.1)', width: '36px', height: '36px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <div style={{ color: 'var(--secondary)', background: 'rgba(59, 130, 246, 0.1)', width: '36px', height: '36px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <Activity size={18} />
                   </div>
                 </div>
@@ -628,7 +628,7 @@ function App() {
                                 Termin-Link versendet
                               </span>
                             ) : (
-                              <span className="badge" style={{ border: '1px solid rgba(99, 102, 241, 0.2)', background: 'rgba(99, 102, 241, 0.08)', color: '#818cf8' }}>
+                              <span className="badge" style={{ border: '1px solid rgba(37, 99, 235, 0.2)', background: 'rgba(37, 99, 235, 0.08)', color: '#60a5fa' }}>
                                 Link ausstehend
                               </span>
                             )
