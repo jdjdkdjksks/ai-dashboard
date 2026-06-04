@@ -184,7 +184,16 @@ function FeedbackForm({ currentUser }) {
 function App() {
   const [currentUser, setCurrentUser] = useState(() => {
     const saved = localStorage.getItem('currentUser');
-    return saved ? JSON.parse(saved) : null;
+    if (!saved) return null;
+    
+    // Wir erzwingen die Aktualisierung der Daten aus customers.js, 
+    // damit alte URLs im localStorage (wie webhook-test) überschrieben werden.
+    const savedUser = JSON.parse(saved);
+    const freshData = CUSTOMERS[savedUser.name];
+    if (freshData) {
+      return { ...freshData, id: savedUser.id };
+    }
+    return savedUser;
   });
   
   const [logs, setLogs] = useState([]);
