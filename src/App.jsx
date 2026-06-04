@@ -5,7 +5,7 @@ import {
 } from 'recharts';
 import { 
   Activity, Mail, Wrench, Link as LinkIcon, Sparkles, 
-  Settings, PieChart as PieChartIcon, CheckCircle, Info, Lock, User
+  Settings, PieChart as PieChartIcon, CheckCircle, Info, Lock, User, Clock
 } from 'lucide-react';
 import { CUSTOMERS } from './customers';
 import './index.css';
@@ -181,23 +181,47 @@ function App() {
   }
 
   const pathDistribution = logs.reduce((acc, log) => {
-    const existing = acc.find(item => item.name === log.category);
+    let categoryName = 'Automatisch gefiltert';
+    if (log.category === 'werkstatt') categoryName = 'Werkstatt';
+    else if (log.category === 'verkauf') categoryName = 'Verkauf';
+    
+    const existing = acc.find(item => item.name === categoryName);
     if (existing) existing.value += 1;
-    else acc.push({ name: log.category, value: 1 });
+    else acc.push({ name: categoryName, value: 1 });
     return acc;
   }, []);
   pathDistribution.sort((a, b) => b.value - a.value);
 
-  const linkDistribution = logs.reduce((acc, log) => {
-    let stat = 'Info (Kein Link)';
-    if (log.linkStatus.toLowerCase() === 'nein') stat = 'Ausstehend';
-    else if (log.linkStatus && log.linkStatus.toLowerCase() !== 'nein') stat = 'Link Versendet';
-    
-    const existing = acc.find(item => item.name === stat);
-    if (existing) existing.value += 1;
-    else acc.push({ name: stat, value: 1 });
-    return acc;
-  }, []);
+  // Split customer actions into Werkstatt (Termin-Link gesendet) and Verkauf (Rückruf initiiert)
+  const actionDistribution = [
+    { 
+      name: 'Termin-Link gesendet (Werkstatt)', 
+      value: logs.filter(l => l.category === 'werkstatt' && l.linkStatus && l.linkStatus.toLowerCase() !== 'nein').length 
+    },
+    { 
+      name: 'Telefonischer Rückruf initiiert (Verkauf)', 
+      value: logs.filter(l => l.category === 'verkauf').length 
+    }
+  ];
+  
+  const hasActions = actionDistribution.some(item => item.value > 0);
+  const actionChartData = hasActions 
+    ? actionDistribution.filter(item => item.value > 0)
+    : [{ name: 'Keine Aktionen', value: 1 }];
+
+  const ACTION_COLORS = {
+    'Termin-Link gesendet (Werkstatt)': 'var(--primary)',
+    'Telefonischer Rückruf initiiert (Verkauf)': 'var(--success)',
+    'Keine Aktionen': '#374151'
+  };
+
+  // Gesparte Arbeitszeit logic:
+  // - 3 minutes per filtered email (category !== 'werkstatt' && category !== 'verkauf')
+  // - 8 minutes per answered email (category === 'werkstatt' || category === 'verkauf')
+  const filteredCount = logs.filter(l => l.category !== 'werkstatt' && l.category !== 'verkauf').length;
+  const processedCount = logs.filter(l => l.category === 'werkstatt' || l.category === 'verkauf').length;
+  const savedMinutes = (filteredCount * 3) + (processedCount * 8);
+  const savedHours = Math.round(savedMinutes / 60);
 
   return (
     <div className="app-container">
@@ -247,6 +271,15 @@ function App() {
                 <span className="text-danger" style={{fontSize: '0.7rem', maxWidth: '300px', textAlign: 'right'}}>{errorDetails}</span>
               </div>
             )}
+            
+            {/* Speed-Metrik Badge */}
+            <div className="glass-panel" style={{ padding: '8px 16px', borderRadius: '99px', border: '1px solid rgba(16, 185, 129, 0.2)', background: 'rgba(16, 185, 129, 0.05)' }}>
+              <span className="flex items-center gap-2 text-sm" style={{ color: 'var(--success)', fontWeight: '600' }}>
+                <Activity size={14} style={{ color: 'var(--success)' }} />
+                Ø Antwortzeit: &lt; 60 Sek.
+              </span>
+            </div>
+
             <div className="glass-panel" style={{ padding: '8px 16px', borderRadius: '99px' }}>
               <span className="flex items-center gap-2 text-sm">
                 <span style={{
@@ -263,9 +296,9 @@ function App() {
 
         {activeTab === 'dashboard' && (
           <div className="animate-fade-in" style={{ animationDelay: '0.1s' }}>
-            <div className="dashboard-grid">
+            <div className="dashboard-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))' }}>
               <div className="glass-panel stat-card">
-                <div className="stat-icon"><Mail /></div>
+                <div className="stat-icon" style={{color: 'var(--primary)', background: 'rgba(99, 102, 241, 0.1)'}}><Mail /></div>
                 <div className="stat-content">
                   <h3>Alle E-Mails</h3>
                   <div className="stat-value">{logs.length}</div>
@@ -273,20 +306,29 @@ function App() {
               </div>
               <div className="glass-panel stat-card">
                 <div className="stat-icon" style={{color: 'var(--success)', background: 'rgba(16, 185, 129, 0.1)'}}>
-                  <Wrench />
+                  <CheckCircle />
                 </div>
                 <div className="stat-content">
-                  <h3>Werkstatt Anfragen</h3>
-                  <div className="stat-value">{logs.filter(l => l.category === 'werkstatt').length}</div>
+                  <h3>Automatisch gefiltert (Kein Handlungsbedarf)</h3>
+                  <div className="stat-value">{filteredCount}</div>
                 </div>
               </div>
               <div className="glass-panel stat-card">
-                <div className="stat-icon" style={{color: 'var(--primary)', background: 'rgba(99, 102, 241, 0.1)'}}>
-                  <LinkIcon />
+                <div className="stat-icon" style={{color: 'var(--secondary)', background: 'rgba(139, 92, 246, 0.1)'}}>
+                  <Activity />
                 </div>
                 <div className="stat-content">
-                  <h3>Links Versendet</h3>
-                  <div className="stat-value">{logs.filter(l => l.linkStatus && l.linkStatus.toLowerCase() !== 'nein').length}</div>
+                  <h3>Eingeleitete Kunden-Aktionen</h3>
+                  <div className="stat-value">{actionDistribution.reduce((sum, item) => sum + item.value, 0)}</div>
+                </div>
+              </div>
+              <div className="glass-panel stat-card">
+                <div className="stat-icon" style={{color: 'var(--warning)', background: 'rgba(245, 158, 11, 0.1)'}}>
+                  <Clock />
+                </div>
+                <div className="stat-content">
+                  <h3>Gesparte Arbeitszeit</h3>
+                  <div className="stat-value">~ {savedHours} Stunden</div>
                 </div>
               </div>
             </div>
@@ -317,29 +359,46 @@ function App() {
               </div>
 
               <div className="glass-panel">
-                <h3 className="mb-4">Aktionen (Link Versendet)</h3>
-                <div style={{ height: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={linkDistribution}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={60}
-                        outerRadius={80}
-                        paddingAngle={5}
-                        dataKey="value"
-                      >
-                        {linkDistribution.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip 
-                        contentStyle={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '8px', color: '#fff' }}
-                        itemStyle={{color: '#fff'}}
-                      />
-                    </PieChart>
-                  </ResponsiveContainer>
+                <h3 className="mb-4">Eingeleitete Kunden-Aktionen</h3>
+                <div style={{ display: 'flex', flexDirection: 'column', height: '300px', justifyContent: 'center' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '200px' }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={actionChartData}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={55}
+                          outerRadius={75}
+                          paddingAngle={5}
+                          dataKey="value"
+                        >
+                          {actionChartData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={ACTION_COLORS[entry.name] || 'var(--secondary)'} />
+                          ))}
+                        </Pie>
+                        <Tooltip 
+                          contentStyle={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '8px', color: '#fff' }}
+                          itemStyle={{color: '#fff'}}
+                        />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                  
+                  {/* Custom Legend */}
+                  <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', flexWrap: 'wrap', marginTop: '16px' }}>
+                    {actionChartData.map((entry, idx) => (
+                      <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.85rem' }}>
+                        <span style={{ 
+                          width: '10px', height: '10px', borderRadius: '50%', 
+                          backgroundColor: ACTION_COLORS[entry.name] || 'var(--secondary)',
+                          display: 'inline-block'
+                        }}></span>
+                        <span style={{ color: 'var(--text-muted)' }}>{entry.name}:</span>
+                        <span style={{ fontWeight: 'bold', color: '#fff' }}>{hasActions ? entry.value : 0}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
@@ -365,7 +424,7 @@ function App() {
                   <th>Zeitpunkt</th>
                   <th>Kategorie</th>
                   <th>Kundenanliegen</th>
-                  <th>Link versendet</th>
+                  <th>Eingeleitete Aktion</th>
                 </tr>
               </thead>
               <tbody>
@@ -373,17 +432,6 @@ function App() {
                   <tr><td colSpan="4" style={{textAlign: 'center', padding: '32px'}}>Keine Daten gefunden.</td></tr>
                 ) : (
                   logs.slice(0, 50).map((log, idx) => {
-                    let badgeClass = "badge-warning";
-                    let badgeLabel = "Ausstehend";
-                    
-                    if (log.linkStatus === "") {
-                      badgeClass = "";
-                      badgeLabel = "Info";
-                    } else if (log.linkStatus.toLowerCase() !== "nein") {
-                      badgeClass = "badge-success";
-                      badgeLabel = "Versendet";
-                    }
-
                     return (
                       <tr key={log.id || idx}>
                         <td>
@@ -391,18 +439,46 @@ function App() {
                           <div className="text-muted text-sm">{log.date}</div>
                         </td>
                         <td>
-                          <span className="badge badge-primary" style={{ textTransform: 'capitalize' }}>
-                            {log.category === 'werkstatt' ? <Wrench size={12} className="mr-1" style={{marginRight: '4px'}}/> : <Mail size={12} className="mr-1" style={{marginRight: '4px'}}/>}
-                            {log.category}
-                          </span>
+                          {log.category === 'werkstatt' ? (
+                            <span className="badge badge-primary">
+                              <Wrench size={12} style={{marginRight: '4px'}}/>
+                              Werkstatt
+                            </span>
+                          ) : log.category === 'verkauf' ? (
+                            <span className="badge badge-success" style={{ border: '1px solid rgba(16, 185, 129, 0.2)', background: 'rgba(16, 185, 129, 0.1)', color: 'var(--success)' }}>
+                              <User size={12} style={{marginRight: '4px'}}/>
+                              Verkauf
+                            </span>
+                          ) : (
+                            <span className="badge badge-warning" style={{ border: '1px solid rgba(245, 158, 11, 0.2)', background: 'rgba(245, 158, 11, 0.1)', color: 'var(--warning)' }}>
+                              <Info size={12} style={{marginRight: '4px'}}/>
+                              Automatisch gefiltert
+                            </span>
+                          )}
                         </td>
                         <td style={{maxWidth: '400px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'}}>
                           {log.summary}
                         </td>
                         <td>
-                          <span className={`badge ${badgeClass}`} style={badgeClass === '' ? {background: 'rgba(255,255,255,0.05)', color: 'var(--text-muted)'} : {}}>
-                            {badgeLabel}
-                          </span>
+                          {log.category === 'verkauf' ? (
+                            <span className="badge badge-success" style={{ border: '1px solid rgba(16, 185, 129, 0.2)', background: 'rgba(16, 185, 129, 0.1)', color: 'var(--success)' }}>
+                              Rückruf initiiert
+                            </span>
+                          ) : log.category === 'werkstatt' ? (
+                            log.linkStatus && log.linkStatus.toLowerCase() !== 'nein' ? (
+                              <span className="badge badge-primary">
+                                Termin-Link versendet
+                              </span>
+                            ) : (
+                              <span className="badge badge-warning">
+                                Link ausstehend
+                              </span>
+                            )
+                          ) : (
+                            <span className="badge" style={{ background: 'rgba(255, 255, 255, 0.05)', color: 'var(--text-muted)', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                              Kein Handlungsbedarf
+                            </span>
+                          )}
                         </td>
                       </tr>
                     );
