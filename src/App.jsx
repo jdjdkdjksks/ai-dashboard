@@ -88,6 +88,14 @@ function App() {
   const [error, setError] = useState(null);
   const [errorDetails, setErrorDetails] = useState('');
   const [lastUpdate, setLastUpdate] = useState(new Date().toLocaleTimeString('de-DE'));
+  const [expandedRows, setExpandedRows] = useState({});
+  
+  const toggleRow = (id) => {
+    setExpandedRows(prev => ({
+      ...prev,
+      [id]: !prev[id]
+    }));
+  };
   
   const handleLogin = (user) => {
     setCurrentUser(user);
@@ -203,16 +211,33 @@ function App() {
       value: logs.filter(l => l.category === 'verkauf').length 
     }
   ];
-  
-  const hasActions = actionDistribution.some(item => item.value > 0);
-  const actionChartData = hasActions 
-    ? actionDistribution.filter(item => item.value > 0)
-    : [{ name: 'Keine Aktionen', value: 1 }];
 
-  const ACTION_COLORS = {
-    'Termin-Link gesendet (Werkstatt)': 'var(--primary)',
-    'Telefonischer Rückruf initiiert (Verkauf)': 'var(--success)',
-    'Keine Aktionen': '#374151'
+  // Split total incoming emails into Filtered, Werkstatt, and Verkauf
+  const totalMailsDistribution = [
+    { 
+      name: 'Automatisch gefiltert', 
+      value: filteredCount 
+    },
+    { 
+      name: 'Werkstatt-Anfragen', 
+      value: logs.filter(l => l.category === 'werkstatt').length 
+    },
+    { 
+      name: 'Verkauf-Anfragen', 
+      value: logs.filter(l => l.category === 'verkauf').length 
+    }
+  ];
+  
+  const hasMails = logs.length > 0;
+  const mailChartData = hasMails 
+    ? totalMailsDistribution.filter(item => item.value > 0)
+    : [{ name: 'Keine E-Mails', value: 1 }];
+
+  const MAIL_COLORS = {
+    'Automatisch gefiltert': '#4b5563', // Neutral gray-blue for filters
+    'Werkstatt-Anfragen': 'var(--primary)', // Indigo for Werkstatt
+    'Verkauf-Anfragen': 'var(--success)', // Green for Verkauf
+    'Keine E-Mails': '#374151'
   };
 
   // Gesparte Arbeitszeit logic:
@@ -296,39 +321,60 @@ function App() {
 
         {activeTab === 'dashboard' && (
           <div className="animate-fade-in" style={{ animationDelay: '0.1s' }}>
-            <div className="dashboard-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))' }}>
-              <div className="glass-panel stat-card">
-                <div className="stat-icon" style={{color: 'var(--primary)', background: 'rgba(99, 102, 241, 0.1)'}}><Mail /></div>
-                <div className="stat-content">
-                  <h3>Alle E-Mails</h3>
-                  <div className="stat-value">{logs.length}</div>
+            <div className="dashboard-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
+              <div className="glass-panel stat-card" style={{ flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'space-between', minHeight: '140px', padding: '20px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    E-Mails gesamt
+                  </span>
+                  <div style={{ color: 'var(--primary)', background: 'rgba(99, 102, 241, 0.1)', width: '36px', height: '36px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Mail size={18} />
+                  </div>
+                </div>
+                <div style={{ fontSize: '2rem', fontWeight: '700', color: '#fff', lineHeight: '1.2', marginTop: '16px' }}>
+                  {logs.length}
                 </div>
               </div>
-              <div className="glass-panel stat-card">
-                <div className="stat-icon" style={{color: 'var(--success)', background: 'rgba(16, 185, 129, 0.1)'}}>
-                  <CheckCircle />
+              
+              <div className="glass-panel stat-card" style={{ flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'space-between', minHeight: '140px', padding: '20px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    Automatisch gefiltert
+                  </span>
+                  <div style={{ color: '#9ca3af', background: 'rgba(255, 255, 255, 0.05)', width: '36px', height: '36px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <CheckCircle size={18} />
+                  </div>
                 </div>
-                <div className="stat-content">
-                  <h3>Automatisch gefiltert (Kein Handlungsbedarf)</h3>
-                  <div className="stat-value">{filteredCount}</div>
-                </div>
-              </div>
-              <div className="glass-panel stat-card">
-                <div className="stat-icon" style={{color: 'var(--secondary)', background: 'rgba(139, 92, 246, 0.1)'}}>
-                  <Activity />
-                </div>
-                <div className="stat-content">
-                  <h3>Eingeleitete Kunden-Aktionen</h3>
-                  <div className="stat-value">{actionDistribution.reduce((sum, item) => sum + item.value, 0)}</div>
+                <div style={{ fontSize: '2rem', fontWeight: '700', color: '#fff', lineHeight: '1.2', marginTop: '16px' }}>
+                  {filteredCount}
                 </div>
               </div>
-              <div className="glass-panel stat-card">
-                <div className="stat-icon" style={{color: 'var(--warning)', background: 'rgba(245, 158, 11, 0.1)'}}>
-                  <Clock />
+
+              <div className="glass-panel stat-card" style={{ flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'space-between', minHeight: '140px', padding: '20px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    Kunden-Aktionen
+                  </span>
+                  <div style={{ color: 'var(--secondary)', background: 'rgba(139, 92, 246, 0.1)', width: '36px', height: '36px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Activity size={18} />
+                  </div>
                 </div>
-                <div className="stat-content">
-                  <h3>Gesparte Arbeitszeit</h3>
-                  <div className="stat-value">~ {savedHours} Stunden</div>
+                <div style={{ fontSize: '2rem', fontWeight: '700', color: '#fff', lineHeight: '1.2', marginTop: '16px' }}>
+                  {actionDistribution.reduce((sum, item) => sum + item.value, 0)}
+                </div>
+              </div>
+
+              <div className="glass-panel stat-card" style={{ flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'space-between', minHeight: '140px', padding: '20px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    Arbeitsersparnis
+                  </span>
+                  <div style={{ color: 'var(--warning)', background: 'rgba(245, 158, 11, 0.1)', width: '36px', height: '36px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Clock size={18} />
+                  </div>
+                </div>
+                <div style={{ fontSize: '2rem', fontWeight: '700', color: '#fff', lineHeight: '1.2', marginTop: '16px' }}>
+                  ~ {savedHours} Std.
                 </div>
               </div>
             </div>
@@ -359,13 +405,13 @@ function App() {
               </div>
 
               <div className="glass-panel">
-                <h3 className="mb-4">Eingeleitete Kunden-Aktionen</h3>
+                <h3 className="mb-4">E-Mail-Verteilung & Kontakte</h3>
                 <div style={{ display: 'flex', flexDirection: 'column', height: '300px', justifyContent: 'center' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '200px' }}>
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
                         <Pie
-                          data={actionChartData}
+                          data={mailChartData}
                           cx="50%"
                           cy="50%"
                           innerRadius={55}
@@ -373,8 +419,8 @@ function App() {
                           paddingAngle={5}
                           dataKey="value"
                         >
-                          {actionChartData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={ACTION_COLORS[entry.name] || 'var(--secondary)'} />
+                          {mailChartData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={MAIL_COLORS[entry.name] || 'var(--secondary)'} />
                           ))}
                         </Pie>
                         <Tooltip 
@@ -387,15 +433,15 @@ function App() {
                   
                   {/* Custom Legend */}
                   <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', flexWrap: 'wrap', marginTop: '16px' }}>
-                    {actionChartData.map((entry, idx) => (
+                    {mailChartData.map((entry, idx) => (
                       <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.85rem' }}>
                         <span style={{ 
                           width: '10px', height: '10px', borderRadius: '50%', 
-                          backgroundColor: ACTION_COLORS[entry.name] || 'var(--secondary)',
+                          backgroundColor: MAIL_COLORS[entry.name] || 'var(--secondary)',
                           display: 'inline-block'
                         }}></span>
                         <span style={{ color: 'var(--text-muted)' }}>{entry.name}:</span>
-                        <span style={{ fontWeight: 'bold', color: '#fff' }}>{hasActions ? entry.value : 0}</span>
+                        <span style={{ fontWeight: 'bold', color: '#fff' }}>{hasMails ? entry.value : 0}</span>
                       </div>
                     ))}
                   </div>
@@ -450,14 +496,31 @@ function App() {
                               Verkauf
                             </span>
                           ) : (
-                            <span className="badge badge-warning" style={{ border: '1px solid rgba(245, 158, 11, 0.2)', background: 'rgba(245, 158, 11, 0.1)', color: 'var(--warning)' }}>
-                              <Info size={12} style={{marginRight: '4px'}}/>
+                            <span className="badge" style={{ border: '1px solid rgba(255, 255, 255, 0.1)', background: 'rgba(255, 255, 255, 0.04)', color: 'var(--text-muted)' }}>
+                              <CheckCircle size={12} style={{marginRight: '4px', color: 'var(--text-muted)'}}/>
                               Automatisch gefiltert
                             </span>
                           )}
                         </td>
-                        <td style={{maxWidth: '400px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'}}>
-                          {log.summary}
+                        <td 
+                          style={{ 
+                            maxWidth: '400px', 
+                            cursor: 'pointer', 
+                            transition: 'color 0.2s',
+                            padding: '16px'
+                          }}
+                          onClick={() => toggleRow(log.id || idx)}
+                          title="Klicken, um den ganzen Text anzuzeigen"
+                        >
+                          {expandedRows[log.id || idx] ? (
+                            <div style={{ whiteSpace: 'normal', wordBreak: 'break-word', color: '#fff', fontSize: '0.95rem', lineHeight: '1.4' }}>
+                              {log.summary}
+                            </div>
+                          ) : (
+                            <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: 'var(--text-main)' }} className="hover-highlight">
+                              {log.summary}
+                            </div>
+                          )}
                         </td>
                         <td>
                           {log.category === 'verkauf' ? (
@@ -470,7 +533,7 @@ function App() {
                                 Termin-Link versendet
                               </span>
                             ) : (
-                              <span className="badge badge-warning">
+                              <span className="badge" style={{ border: '1px solid rgba(99, 102, 241, 0.2)', background: 'rgba(99, 102, 241, 0.08)', color: '#818cf8' }}>
                                 Link ausstehend
                               </span>
                             )
