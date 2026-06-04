@@ -31,9 +31,7 @@ function LoginForm({ onLogin }) {
     <div className="login-container">
       <div className="login-box glass-panel animate-fade-in">
         <div className="brand" style={{ justifyContent: 'center', marginBottom: '24px' }}>
-          <div className="brand-icon">
-            <Sparkles size={20} color="#fff" />
-          </div>
+          <img src="/logo.png" alt="AutoFlow AI" style={{ height: '32px', width: 'auto' }} />
           AutoFlow AI
         </div>
         <h2 style={{ marginBottom: '8px' }}>Willkommen zurück</h2>
@@ -182,7 +180,7 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [errorDetails, setErrorDetails] = useState('');
-  const [lastUpdate, setLastUpdate] = useState(new Date().toLocaleTimeString('de-DE'));
+  const [lastUpdate, setLastUpdate] = useState(new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }));
   const [expandedRows, setExpandedRows] = useState({});
   const [showAllLogs, setShowAllLogs] = useState(false);
   
@@ -268,7 +266,7 @@ function App() {
         setErrorDetails('Die empfangenen Daten waren leer oder in einem unerwarteten Format.');
       }
       setLoading(false);
-      setLastUpdate(new Date().toLocaleTimeString('de-DE'));
+      setLastUpdate(new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }));
     } catch (err) {
       console.error('Fehler beim Laden der Daten:', err);
       setError('Konnte Daten nicht laden.');
@@ -342,9 +340,7 @@ function App() {
       {/* Sidebar */}
       <aside className="sidebar">
         <div className="brand">
-          <div className="brand-icon">
-            <Sparkles size={20} color="#fff" />
-          </div>
+          <img src="/logo.png" alt="AutoFlow AI" style={{ height: '32px', width: 'auto' }} />
           AutoFlow AI
         </div>
         
@@ -409,7 +405,7 @@ function App() {
                   display: 'inline-block', 
                   boxShadow: `0 0 8px ${loading ? 'var(--warning)' : (error ? 'var(--danger)' : 'var(--success)')}`
                 }}></span>
-                {loading ? 'Aktualisiere...' : `Live (Update: ${lastUpdate})`}
+                {loading ? 'Aktualisiere...' : `Live ${lastUpdate}`}
               </span>
             </div>
           </div>
