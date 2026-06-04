@@ -141,8 +141,8 @@ function FeedbackForm({ currentUser }) {
 
   return (
     <div className="glass-panel animate-fade-in">
-      <h3 style={{ marginBottom: '8px' }}>Feedback geben</h3>
-      <p className="text-muted mb-8">Wie können wir das Dashboard für dich verbessern? Schreib uns deine Meinung, Wünsche oder Fehlerberichte.</p>
+      <h3 style={{ marginBottom: '8px' }}>KI-System & Antworten optimieren</h3>
+      <p className="text-muted mb-8">Haben Sie Anmerkungen zur Qualität der KI-Antworten oder Wünsche zur Anpassung des Systems? Teilen Sie uns Ihr Feedback mit.</p>
       
       {error && <div className="error-message" style={{ marginBottom: '16px' }}>{error}</div>}
 
@@ -228,17 +228,19 @@ function App() {
       
       if (rows.length > 0) {
         const parsedData = rows.map((row, i) => {
-          let dateStr = 'Heute';
-          let timeStr = '00:00';
+          let dateStr = '';
+          let timeStr = '';
           
           if (row.Zeit) {
             const zeitStr = String(row.Zeit);
             if (zeitStr.includes('T')) {
               const dateObj = new Date(zeitStr);
-              dateStr = dateObj.toLocaleDateString('de-DE');
+              dateStr = dateObj.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
               timeStr = dateObj.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
             } else {
+              // Fallback falls nur Zeit geliefert wird
               timeStr = zeitStr;
+              dateStr = new Date().toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
             }
           }
 
@@ -247,8 +249,7 @@ function App() {
 
           return {
             id: row.row_number || i,
-            time: timeStr,
-            date: dateStr,
+            fullTimestamp: `${dateStr} ${timeStr} Uhr`,
             category: (category || '').toString().toLowerCase(),
             summary: row.Kundenanliegen || row.Zusammenfassung || 'Keine Details',
             linkStatus: row['Link - versendet'] || ''
@@ -549,22 +550,13 @@ function App() {
         <div className="glass-panel animate-fade-in" style={{ animationDelay: '0.2s', marginTop: activeTab === 'logs' ? '0' : '32px', display: activeTab === 'dashboard' || activeTab === 'logs' ? 'block' : 'none' }}>
           <div className="flex justify-between items-center mb-4">
             <h3>{activeTab === 'logs' ? 'Alle Logs' : 'Letzte E-Mail Eingänge'}</h3>
-            <div className="flex gap-2">
-              <button style={{
-                background: 'transparent', border: '1px solid var(--border)', 
-                color: '#fff', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer',
-                transition: 'all 0.2s'
-              }} onClick={() => setShowAllLogs(!showAllLogs)}>
-                {showAllLogs ? 'Weniger anzeigen' : 'Alle Mails anzeigen'}
-              </button>
-              <button style={{
-                background: 'transparent', border: '1px solid var(--border)', 
-                color: '#fff', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer',
-                transition: 'all 0.2s'
-              }} onClick={fetchLogs}>
-                Manuell Aktualisieren
-              </button>
-            </div>
+            <button style={{
+              background: 'transparent', border: '1px solid var(--border)', 
+              color: '#fff', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer',
+              transition: 'all 0.2s'
+            }} onClick={fetchLogs}>
+              Manuell Aktualisieren
+            </button>
           </div>
           
           <div className="table-container">
@@ -584,9 +576,8 @@ function App() {
                   (showAllLogs ? logs : logs.slice(0, 50)).map((log, idx) => {
                     return (
                       <tr key={log.id || idx}>
-                        <td>
-                          <div style={{fontWeight: 500}}>{log.time}</div>
-                          <div className="text-muted text-sm">{log.date}</div>
+                        <td style={{ minWidth: '150px' }}>
+                          <div style={{fontWeight: 500, fontSize: '0.9rem'}}>{log.fullTimestamp}</div>
                         </td>
                         <td>
                           {log.category === 'werkstatt' ? (
@@ -654,6 +645,40 @@ function App() {
               </tbody>
             </table>
           </div>
+
+          {!showAllLogs && logs.length > 50 && (
+            <div style={{ 
+              marginTop: '24px', 
+              paddingTop: '24px', 
+              borderTop: '1px solid var(--border)', 
+              textAlign: 'center' 
+            }}>
+              <button 
+                className="login-button" 
+                style={{ maxWidth: '300px', margin: '0 auto', background: 'rgba(255, 255, 255, 0.05)', border: '1px solid var(--border)', boxShadow: 'none' }}
+                onClick={() => setShowAllLogs(true)}
+              >
+                Alle Mails anzeigen ({logs.length})
+              </button>
+            </div>
+          )}
+          
+          {showAllLogs && logs.length > 50 && (
+            <div style={{ 
+              marginTop: '24px', 
+              paddingTop: '24px', 
+              borderTop: '1px solid var(--border)', 
+              textAlign: 'center' 
+            }}>
+              <button 
+                className="login-button" 
+                style={{ maxWidth: '300px', margin: '0 auto', background: 'rgba(255, 255, 255, 0.05)', border: '1px solid var(--border)', boxShadow: 'none' }}
+                onClick={() => setShowAllLogs(false)}
+              >
+                Weniger anzeigen
+              </button>
+            </div>
+          )}
         </div>
       </main>
     </div>
