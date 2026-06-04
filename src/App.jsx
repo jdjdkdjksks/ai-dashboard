@@ -188,6 +188,14 @@ function App() {
     return <LoginForm onLogin={handleLogin} />;
   }
 
+  // Gesparte Arbeitszeit logic:
+  // - 3 minutes per filtered email (category !== 'werkstatt' && category !== 'verkauf')
+  // - 8 minutes per answered email (category === 'werkstatt' || category === 'verkauf')
+  const filteredCount = logs.filter(l => l.category !== 'werkstatt' && l.category !== 'verkauf').length;
+  const processedCount = logs.filter(l => l.category === 'werkstatt' || l.category === 'verkauf').length;
+  const savedMinutes = (filteredCount * 3) + (processedCount * 8);
+  const savedHours = Math.round(savedMinutes / 60);
+
   const pathDistribution = logs.reduce((acc, log) => {
     let categoryName = 'Automatisch gefiltert';
     if (log.category === 'werkstatt') categoryName = 'Werkstatt';
@@ -239,14 +247,6 @@ function App() {
     'Verkauf-Anfragen': 'var(--success)', // Green for Verkauf
     'Keine E-Mails': '#374151'
   };
-
-  // Gesparte Arbeitszeit logic:
-  // - 3 minutes per filtered email (category !== 'werkstatt' && category !== 'verkauf')
-  // - 8 minutes per answered email (category === 'werkstatt' || category === 'verkauf')
-  const filteredCount = logs.filter(l => l.category !== 'werkstatt' && l.category !== 'verkauf').length;
-  const processedCount = logs.filter(l => l.category === 'werkstatt' || l.category === 'verkauf').length;
-  const savedMinutes = (filteredCount * 3) + (processedCount * 8);
-  const savedHours = Math.round(savedMinutes / 60);
 
   return (
     <div className="app-container">
