@@ -87,13 +87,12 @@ function FeedbackForm({ currentUser }) {
     const webhookUrl = currentUser.feedbackWebhook || 'https://n8n.autoflow-ai.de/webhook/feedback-general';
 
     try {
-      // Wir verwenden 'no-cors', da n8n Webhooks oft keine CORS-Header senden
-      // und wir nur wollen, dass die Daten dort ankommen.
+      // Wir senden es als text/plain, um eine CORS-Preflight-Anfrage (OPTIONS) zu vermeiden.
+      // n8n kann diesen Body trotzdem als JSON verarbeiten.
       await fetch(webhookUrl, {
         method: 'POST',
-        mode: 'no-cors',
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'text/plain',
         },
         body: JSON.stringify({
           customer: currentUser.name,
