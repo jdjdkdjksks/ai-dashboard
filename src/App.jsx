@@ -650,7 +650,7 @@ function App() {
                               </span>
                             ) : (
                               <span className="badge" style={{ border: '1px solid rgba(37, 99, 235, 0.2)', background: 'rgba(37, 99, 235, 0.08)', color: '#60a5fa' }}>
-                                Link ausstehend
+                                Telefonat
                               </span>
                             )
                           ) : (
