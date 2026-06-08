@@ -267,23 +267,34 @@ tr:hover td {
   font-weight: 700;
   color: #fff;
   margin-bottom: 40px;
-  transition: opacity 0.2s ease;
+  transition: all 0.2s ease;
+  padding: 8px 16px;
+  margin-left: -16px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  width: fit-content;
 }
 
 .brand:hover {
-  opacity: 0.9;
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.1);
 }
 
 .logo-img {
   height: 38px;
   width: auto;
-  filter: drop-shadow(0 0 10px rgba(37, 99, 235, 0.2));
+  filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.3));
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.15) 0%, transparent 70%);
+  padding: 4px;
+  border-radius: 8px;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .brand:hover .logo-img {
-  transform: scale(1.05) rotate(-2deg);
-  filter: drop-shadow(0 0 15px rgba(37, 99, 235, 0.4));
+  transform: scale(1.05);
+  filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.5));
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.25) 0%, transparent 70%);
 }
 
 .brand-icon {
