@@ -262,39 +262,50 @@ tr:hover td {
 .brand {
   display: flex;
   align-items: center;
-  gap: 14px;
-  font-size: 1.35rem;
+  gap: 12px;
+  font-size: 1.25rem;
   font-weight: 700;
   color: #fff;
   margin-bottom: 40px;
-  transition: all 0.2s ease;
-  padding: 8px 16px;
-  margin-left: -16px;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 10px 20px;
+  margin-left: -10px;
+  border-radius: 100px; /* Pill shape */
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 
+    0 4px 24px -1px rgba(0, 0, 0, 0.2),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.05);
   width: fit-content;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .brand:hover {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+  box-shadow: 
+    0 12px 32px -4px rgba(0, 0, 0, 0.3),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.1);
 }
 
 .logo-img {
-  height: 38px;
+  height: 36px;
   width: auto;
-  filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.3));
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.15) 0%, transparent 70%);
-  padding: 4px;
-  border-radius: 8px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  /* Premium-Glow & Contrast-Boost */
+  filter: brightness(1.1) drop-shadow(0 0 8px rgba(255, 255, 255, 0.2));
+  background: white; /* Der "Trick": Ein weißer Hintergrund NUR für das Logo-Icon */
+  padding: 6px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .brand:hover .logo-img {
-  transform: scale(1.05);
-  filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.5));
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.25) 0%, transparent 70%);
+  transform: scale(1.1) rotate(-3deg);
+  filter: brightness(1.2) drop-shadow(0 0 12px rgba(255, 255, 255, 0.4));
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
 }
 
 .brand-icon {
