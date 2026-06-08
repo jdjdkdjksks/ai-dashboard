@@ -262,11 +262,28 @@ tr:hover td {
 .brand {
   display: flex;
   align-items: center;
-  gap: 12px;
-  font-size: 1.25rem;
+  gap: 14px;
+  font-size: 1.35rem;
   font-weight: 700;
   color: #fff;
   margin-bottom: 40px;
+  transition: opacity 0.2s ease;
+}
+
+.brand:hover {
+  opacity: 0.9;
+}
+
+.logo-img {
+  height: 38px;
+  width: auto;
+  filter: drop-shadow(0 0 10px rgba(37, 99, 235, 0.2));
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.brand:hover .logo-img {
+  transform: scale(1.05) rotate(-2deg);
+  filter: drop-shadow(0 0 15px rgba(37, 99, 235, 0.4));
 }
 
 .brand-icon {

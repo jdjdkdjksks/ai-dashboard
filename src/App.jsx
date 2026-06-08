@@ -31,7 +31,7 @@ function LoginForm({ onLogin }) {
     <div className="login-container">
       <div className="login-box glass-panel animate-fade-in">
         <a href="https://autoflow-ai.de" className="brand" style={{ justifyContent: 'center', marginBottom: '24px', textDecoration: 'none' }}>
-          <img src="/logo.png" alt="AutoFlow AI" style={{ height: '32px', width: 'auto' }} />
+          <img src="/logo.png" alt="AutoFlow AI" className="logo-img" />
           AutoFlow AI
         </a>
         <h2 style={{ marginBottom: '8px' }}>Willkommen zurück</h2>
@@ -361,7 +361,7 @@ function App() {
       {/* Sidebar */}
       <aside className="sidebar">
         <a href="https://autoflow-ai.de" className="brand" style={{ textDecoration: 'none' }}>
-          <img src="/logo.png" alt="AutoFlow AI" style={{ height: '32px', width: 'auto' }} />
+          <img src="/logo.png" alt="AutoFlow AI" className="logo-img" />
           AutoFlow AI
         </a>
         
