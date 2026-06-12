@@ -504,28 +504,29 @@ function App() {
         </header>
 
         {/* Mobile Header Stats Summary removed as requested */}
-        <div className="mobile-only-header animate-fade-in" style={{ marginBottom: '24px' }}>
-           <h1 className="text-xl font-bold text-gradient" style={{ background: 'none', color: '#fff', WebkitTextFillColor: 'initial' }}>
-             {currentUser.name}
+        <div className="mobile-only-header animate-fade-in" style={{ marginBottom: '24px', borderBottom: '1px solid var(--border)', paddingBottom: '16px' }}>
+           <h1 className="text-xl font-bold" style={{ color: '#fff', marginBottom: '4px' }}>
+             Dashboard
            </h1>
-           <p className="text-muted text-sm">Live-Dashboard</p>
+           <p className="text-muted text-xs uppercase tracking-wider">{currentUser.name}</p>
         </div>
 
         {activeTab === 'dashboard' && (
           <div className="animate-fade-in" style={{ animationDelay: '0.1s' }}>
             {/* Timeframe Selector for Dashboard */}
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-semibold">Statistik-Zeitraum</h2>
-              <div className="segmented-control glass-panel" style={{ padding: '4px', borderRadius: '12px', display: 'flex', gap: '4px' }}>
+              <h2 className="text-lg font-semibold desktop-only">Statistik-Zeitraum</h2>
+              <div className="segmented-control glass-panel" style={{ padding: '4px', borderRadius: '12px', display: 'flex', gap: '4px', width: '100%', maxWidth: '400px' }}>
                 {['all', 'day', 'week', 'month'].map((t) => (
                   <button 
                     key={t}
                     onClick={() => setSavingsTimeframe(t)}
                     className={`filter-btn ${savingsTimeframe === t ? 'active' : ''}`}
                     style={{ 
-                      padding: '6px 16px', 
+                      flex: 1,
+                      padding: '8px 4px', 
                       borderRadius: '8px', 
-                      fontSize: '0.85rem',
+                      fontSize: '0.75rem',
                       border: 'none',
                       background: savingsTimeframe === t ? 'var(--primary)' : 'transparent',
                       color: savingsTimeframe === t ? '#fff' : 'var(--text-muted)',
@@ -539,67 +540,42 @@ function App() {
               </div>
             </div>
 
-            <div className="dashboard-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
-              <div className="glass-panel stat-card" style={{ flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'space-between', minHeight: '140px', padding: '20px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
-                  <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                    E-Mails gesamt
-                  </span>
-                  <div style={{ color: 'var(--primary)', background: 'rgba(37, 99, 235, 0.1)', width: '36px', height: '36px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <Mail size={18} />
-                  </div>
-                </div>
-                <div style={{ fontSize: '2rem', fontWeight: '700', color: '#fff', lineHeight: '1.2', marginTop: '16px' }}>
-                  {statsLogs.length}
-                </div>
+            <div className="dashboard-grid mobile-compact-grid">
+              <div className="glass-panel stat-card-compact">
+                <div className="stat-label">Gesamt</div>
+                <div className="stat-value-small">{statsLogs.length}</div>
+                <Mail size={14} className="stat-icon-mini" />
               </div>
               
-              <div className="glass-panel stat-card" style={{ flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'space-between', minHeight: '140px', padding: '20px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
-                  <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                    Automatisch gefiltert
-                  </span>
-                  <div style={{ color: '#9ca3af', background: 'rgba(255, 255, 255, 0.05)', width: '36px', height: '36px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <CheckCircle size={18} />
-                  </div>
-                </div>
-                <div style={{ fontSize: '2rem', fontWeight: '700', color: '#fff', lineHeight: '1.2', marginTop: '16px' }}>
-                  {filteredCount}
-                </div>
+              <div className="glass-panel stat-card-compact">
+                <div className="stat-label">Gefiltert</div>
+                <div className="stat-value-small">{filteredCount}</div>
+                <CheckCircle size={14} className="stat-icon-mini" />
               </div>
 
-              <div className="glass-panel stat-card" style={{ flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'space-between', minHeight: '140px', padding: '20px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
-                  <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                    Kunden-Aktionen
-                  </span>
-                  <div style={{ color: 'var(--secondary)', background: 'rgba(59, 130, 246, 0.1)', width: '36px', height: '36px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <Activity size={18} />
-                  </div>
-                </div>
-                <div style={{ fontSize: '2rem', fontWeight: '700', color: '#fff', lineHeight: '1.2', marginTop: '16px' }}>
-                  {statsLogs.filter(l => l.category === 'werkstatt' || l.category === 'verkauf').length}
-                </div>
+              <div className="glass-panel stat-card-compact">
+                <div className="stat-label">Aktionen</div>
+                <div className="stat-value-small">{statsLogs.filter(l => l.category === 'werkstatt' || l.category === 'verkauf').length}</div>
+                <Activity size={14} className="stat-icon-mini" />
               </div>
 
-              <div className="glass-panel stat-card" style={{ flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'space-between', minHeight: '140px', padding: '20px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
-                  <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                    Arbeitsersparnis
-                  </span>
-                  <div style={{ color: 'var(--warning)', background: 'rgba(245, 158, 11, 0.1)', width: '36px', height: '36px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <Clock size={18} />
-                  </div>
-                </div>
-                <div style={{ fontSize: '2rem', fontWeight: '700', color: '#fff', lineHeight: '1.2', marginTop: '16px' }}>
-                  ~ {savedHours} Std.
-                </div>
+              <div className="glass-panel stat-card-compact highlight">
+                <div className="stat-label">Ersparnis</div>
+                <div className="stat-value-small">{savedHours}h</div>
+                <Clock size={14} className="stat-icon-mini" />
               </div>
             </div>
 
-            <div className="dashboard-grid-large">
+            <div className="dashboard-grid-large desktop-only">
               <div className="glass-panel">
                 <h3 className="mb-4">E-Mail Kategorien</h3>
+...
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
                 <div style={{ height: '300px' }}>
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={pathDistribution} margin={{top: 10, right: 10, left: -20, bottom: 0}}>
