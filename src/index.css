@@ -97,7 +97,7 @@ h1 {
 }
 
 /* Mobile Components (Hidden by default) */
-.mobile-header, .bottom-nav, .mobile-stats-header, .mobile-cards {
+.mobile-header, .bottom-nav, .mobile-only-header, .mobile-cards {
   display: none;
 }
 
@@ -109,7 +109,7 @@ h1 {
 /* Dashboard Grid */
 .dashboard-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 24px;
   margin-bottom: 32px;
 }
@@ -146,7 +146,7 @@ h1 {
     position: sticky;
     top: 0;
     z-index: 100;
-    background: rgba(15, 17, 21, 0.8);
+    background: rgba(15, 17, 21, 0.9);
     backdrop-filter: blur(20px);
     border-bottom: 1px solid var(--border);
     padding: 12px 20px;
@@ -160,24 +160,26 @@ h1 {
     bottom: 0;
     left: 0;
     right: 0;
-    background: rgba(15, 17, 21, 0.95);
+    background: rgba(15, 17, 21, 0.98);
     backdrop-filter: blur(20px);
     border-top: 1px solid var(--border);
-    padding: 12px 10px;
-    padding-bottom: calc(12px + env(safe-area-inset-bottom));
+    padding: 14px 10px;
+    padding-bottom: calc(14px + env(safe-area-inset-bottom));
     justify-content: space-around;
     z-index: 1000;
+    box-shadow: 0 -10px 30px rgba(0,0,0,0.5);
   }
   
   .bottom-nav-item {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 4px;
+    gap: 6px;
     color: var(--text-muted);
-    font-size: 0.7rem;
+    font-size: 0.75rem;
     transition: all 0.2s;
     cursor: pointer;
+    flex: 1;
   }
   
   .bottom-nav-item.active {
@@ -185,16 +187,14 @@ h1 {
   }
   
   .main-content {
-    padding: 20px;
-    padding-top: 24px;
-    padding-bottom: 120px; /* More space for bottom nav + safe area */
+    padding: 24px 16px;
+    padding-bottom: 120px; 
     width: 100%;
   }
   
-  .mobile-stats-header {
+  .mobile-only-header {
     display: block;
-    margin-bottom: 24px;
-    width: 100%;
+    padding: 0 4px;
   }
   
   .desktop-table {
@@ -202,21 +202,34 @@ h1 {
   }
   
   .mobile-cards {
-    display: block;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
     width: 100%;
   }
   
   .dashboard-grid {
     grid-template-columns: 1fr;
     width: 100%;
+    gap: 16px;
   }
   
   .glass-panel {
     width: 100%;
+    padding: 20px;
+  }
+  
+  .mobile-card {
+    border-radius: 20px;
+    padding: 20px !important;
   }
   
   h1 {
     font-size: 1.5rem;
+  }
+  
+  h2 {
+    font-size: 1.25rem;
   }
 }
 

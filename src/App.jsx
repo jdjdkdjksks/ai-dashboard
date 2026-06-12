@@ -503,20 +503,12 @@ function App() {
           </div>
         </header>
 
-        {/* Mobile Header Stats Summary (Only visible on mobile) */}
-        <div className="mobile-stats-header">
-           <h1 className="text-2xl font-bold text-gradient mb-1">{currentUser.name}</h1>
-           <p className="text-muted text-sm mb-4">Live-Dashboard</p>
-           <div className="flex gap-4 mb-6">
-              <div className="glass-panel flex-1" style={{ padding: '12px', textAlign: 'center' }}>
-                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Heute</div>
-                <div style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>{getFilteredByTimeframe(logs, 'day').length}</div>
-              </div>
-              <div className="glass-panel flex-1" style={{ padding: '12px', textAlign: 'center' }}>
-                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Ersparnis</div>
-                <div style={{ fontSize: '1.25rem', fontWeight: 'bold', color: 'var(--warning)' }}>{savedHours}h</div>
-              </div>
-           </div>
+        {/* Mobile Header Stats Summary removed as requested */}
+        <div className="mobile-only-header animate-fade-in" style={{ marginBottom: '24px' }}>
+           <h1 className="text-xl font-bold text-gradient" style={{ background: 'none', color: '#fff', WebkitTextFillColor: 'initial' }}>
+             {currentUser.name}
+           </h1>
+           <p className="text-muted text-sm">Live-Dashboard</p>
         </div>
 
         {activeTab === 'dashboard' && (
