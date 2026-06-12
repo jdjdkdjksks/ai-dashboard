@@ -4,7 +4,7 @@ import {
   PieChart, Pie, Cell
 } from 'recharts';
 import { 
-  Activity, Mail, Wrench, Sparkles, 
+  Activity, Mail, Wrench, 
   CheckCircle, Lock, User, Clock,
   MessageSquare, Send, PieChart as PieChartIcon
 } from 'lucide-react';
@@ -204,6 +204,8 @@ function App() {
   const [lastUpdate, setLastUpdate] = useState(new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }));
   const [expandedRows, setExpandedRows] = useState({});
   const [showAllLogs, setShowAllLogs] = useState(false);
+  const [filterCategory, setFilterCategory] = useState('all');
+  const [savingsTimeframe, setSavingsTimeframe] = useState('all');
   
   const toggleRow = (id) => {
     setExpandedRows(prev => ({
@@ -273,6 +275,7 @@ function App() {
           return {
             id: row.row_number || i,
             fullTimestamp: fullTimestamp,
+            timestamp: row.Zeit ? new Date(row.Zeit).getTime() : Date.now(),
             category: (category || '').toString().toLowerCase(),
             summary: row.Kundenanliegen || row.Zusammenfassung || 'Keine Details',
             linkStatus: row['Link - versendet'] || ''
@@ -308,15 +311,42 @@ function App() {
     return <LoginForm onLogin={handleLogin} />;
   }
 
-  // Gesparte Arbeitszeit logic:
+  // Filter logic for savings and dashboard stats
+  const getFilteredByTimeframe = (data, timeframe) => {
+    if (timeframe === 'all') return data;
+    const now = new Date().getTime();
+    const oneDay = 24 * 60 * 60 * 1000;
+    
+    return data.filter(log => {
+      const logDate = log.timestamp || 0;
+      const diff = now - logDate;
+      if (timeframe === 'day') return diff <= oneDay;
+      if (timeframe === 'week') return diff <= oneDay * 7;
+      if (timeframe === 'month') return diff <= oneDay * 30;
+      return true;
+    });
+  };
+
+  const statsLogs = getFilteredByTimeframe(logs, savingsTimeframe);
+
+  // Gesparte Arbeitszeit logic (based on filtered statsLogs):
   // - 3 minutes per filtered email (category !== 'werkstatt' && category !== 'verkauf')
   // - 8 minutes per answered email (category === 'werkstatt' || category === 'verkauf')
-  const filteredCount = logs.filter(l => l.category !== 'werkstatt' && l.category !== 'verkauf').length;
-  const processedCount = logs.filter(l => l.category === 'werkstatt' || l.category === 'verkauf').length;
+  const filteredCount = statsLogs.filter(l => l.category !== 'werkstatt' && l.category !== 'verkauf').length;
+  const processedCount = statsLogs.filter(l => l.category === 'werkstatt' || l.category === 'verkauf').length;
   const savedMinutes = (filteredCount * 3) + (processedCount * 8);
   const savedHours = Math.round(savedMinutes / 60);
 
-  const pathDistribution = logs.reduce((acc, log) => {
+  // Filter logs for the table based on category
+  const filteredLogs = logs.filter(log => {
+    if (filterCategory === 'all') return true;
+    if (filterCategory === 'werkstatt') return log.category === 'werkstatt';
+    if (filterCategory === 'verkauf') return log.category === 'verkauf';
+    if (filterCategory === 'gefiltert') return log.category !== 'werkstatt' && log.category !== 'verkauf';
+    return true;
+  });
+
+  const pathDistribution = statsLogs.reduce((acc, log) => {
     let categoryName = 'Automatisch gefiltert';
     if (log.category === 'werkstatt') categoryName = 'Werkstatt';
     else if (log.category === 'verkauf') categoryName = 'Verkauf';
@@ -336,15 +366,15 @@ function App() {
     },
     { 
       name: 'Werkstatt-Anfragen', 
-      value: logs.filter(l => l.category === 'werkstatt').length 
+      value: statsLogs.filter(l => l.category === 'werkstatt').length 
     },
     { 
       name: 'Verkauf-Anfragen', 
-      value: logs.filter(l => l.category === 'verkauf').length 
+      value: statsLogs.filter(l => l.category === 'verkauf').length 
     }
   ];
   
-  const hasMails = logs.length > 0;
+  const hasMails = statsLogs.length > 0;
   const mailChartData = hasMails 
     ? totalMailsDistribution.filter(item => item.value > 0)
     : [{ name: 'Keine E-Mails', value: 1 }];
@@ -358,7 +388,19 @@ function App() {
 
   return (
     <div className="app-container">
-      {/* Sidebar */}
+      {/* Mobile Header */}
+      <header className="mobile-header">
+        <div className="brand" style={{ marginBottom: 0, padding: '6px 16px' }}>
+          <img src="/logo.png" alt="AutoFlow AI" className="logo-img" style={{ height: '24px' }} />
+          <span style={{ fontSize: '1rem' }}>AutoFlow AI</span>
+        </div>
+        <div className="user-badge">
+          <User size={16} />
+          <span>{currentUser.name}</span>
+        </div>
+      </header>
+
+      {/* Sidebar (Desktop only via CSS) */}
       <aside className="sidebar">
         <a href="https://autoflow-ai.de" className="brand" style={{ textDecoration: 'none' }}>
           <img src="/logo.png" alt="AutoFlow AI" className="logo-img" />
@@ -395,9 +437,38 @@ function App() {
         </div>
       </aside>
 
+      {/* Bottom Navigation (Mobile only via CSS) */}
+      <nav className="bottom-nav">
+        <div 
+          className={`bottom-nav-item ${activeTab === 'dashboard' ? 'active' : ''}`}
+          onClick={() => setActiveTab('dashboard')}
+        >
+          <PieChartIcon size={24} />
+          <span>Dashboard</span>
+        </div>
+        <div 
+          className={`bottom-nav-item ${activeTab === 'logs' ? 'active' : ''}`}
+          onClick={() => setActiveTab('logs')}
+        >
+          <Activity size={24} />
+          <span>Logs</span>
+        </div>
+        <div 
+          className={`bottom-nav-item ${activeTab === 'feedback' ? 'active' : ''}`}
+          onClick={() => setActiveTab('feedback')}
+        >
+          <MessageSquare size={24} />
+          <span>Feedback</span>
+        </div>
+        <div className="bottom-nav-item" onClick={handleLogout} style={{ color: 'var(--danger)' }}>
+          <Lock size={24} />
+          <span>Logout</span>
+        </div>
+      </nav>
+
       {/* Main Content */}
       <main className="main-content">
-        <header className="flex justify-between items-center mb-8 animate-fade-in">
+        <header className="desktop-header flex justify-between items-center mb-8 animate-fade-in">
           <div>
             <h1 className="text-gradient">Dashboard: {currentUser.name}</h1>
             <p className="text-muted">Live-Auswertung Ihrer automatisierten E-Mails</p>
@@ -432,8 +503,50 @@ function App() {
           </div>
         </header>
 
+        {/* Mobile Header Stats Summary (Only visible on mobile) */}
+        <div className="mobile-stats-header">
+           <h1 className="text-2xl font-bold text-gradient mb-1">{currentUser.name}</h1>
+           <p className="text-muted text-sm mb-4">Live-Dashboard</p>
+           <div className="flex gap-4 mb-6">
+              <div className="glass-panel flex-1" style={{ padding: '12px', textAlign: 'center' }}>
+                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Heute</div>
+                <div style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>{getFilteredByTimeframe(logs, 'day').length}</div>
+              </div>
+              <div className="glass-panel flex-1" style={{ padding: '12px', textAlign: 'center' }}>
+                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Ersparnis</div>
+                <div style={{ fontSize: '1.25rem', fontWeight: 'bold', color: 'var(--warning)' }}>{savedHours}h</div>
+              </div>
+           </div>
+        </div>
+
         {activeTab === 'dashboard' && (
           <div className="animate-fade-in" style={{ animationDelay: '0.1s' }}>
+            {/* Timeframe Selector for Dashboard */}
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-semibold">Statistik-Zeitraum</h2>
+              <div className="segmented-control glass-panel" style={{ padding: '4px', borderRadius: '12px', display: 'flex', gap: '4px' }}>
+                {['all', 'day', 'week', 'month'].map((t) => (
+                  <button 
+                    key={t}
+                    onClick={() => setSavingsTimeframe(t)}
+                    className={`filter-btn ${savingsTimeframe === t ? 'active' : ''}`}
+                    style={{ 
+                      padding: '6px 16px', 
+                      borderRadius: '8px', 
+                      fontSize: '0.85rem',
+                      border: 'none',
+                      background: savingsTimeframe === t ? 'var(--primary)' : 'transparent',
+                      color: savingsTimeframe === t ? '#fff' : 'var(--text-muted)',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    {t === 'all' ? 'Alle' : t === 'day' ? 'Tag' : t === 'week' ? 'Woche' : 'Monat'}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <div className="dashboard-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
               <div className="glass-panel stat-card" style={{ flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'space-between', minHeight: '140px', padding: '20px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
@@ -445,7 +558,7 @@ function App() {
                   </div>
                 </div>
                 <div style={{ fontSize: '2rem', fontWeight: '700', color: '#fff', lineHeight: '1.2', marginTop: '16px' }}>
-                  {logs.length}
+                  {statsLogs.length}
                 </div>
               </div>
               
@@ -473,7 +586,7 @@ function App() {
                   </div>
                 </div>
                 <div style={{ fontSize: '2rem', fontWeight: '700', color: '#fff', lineHeight: '1.2', marginTop: '16px' }}>
-                  {logs.filter(l => l.category === 'werkstatt' || l.category === 'verkauf').length}
+                  {statsLogs.filter(l => l.category === 'werkstatt' || l.category === 'verkauf').length}
                 </div>
               </div>
 
@@ -569,19 +682,54 @@ function App() {
         )}
 
         <div className="glass-panel animate-fade-in" style={{ animationDelay: '0.2s', marginTop: activeTab === 'logs' ? '0' : '32px', display: activeTab === 'dashboard' || activeTab === 'logs' ? 'block' : 'none' }}>
-          <div className="flex justify-between items-center mb-4">
-            <h3>{activeTab === 'logs' ? 'Alle Logs' : 'Letzte E-Mail Eingänge'}</h3>
+          <div className="flex justify-between items-center mb-6">
+            <h3 style={{ fontSize: '1.25rem' }}>{activeTab === 'logs' ? 'Alle Logs' : 'Letzte E-Mail Eingänge'}</h3>
             <button style={{
-              background: 'transparent', border: '1px solid var(--border)', 
+              background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)', 
               color: '#fff', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer',
-              transition: 'all 0.2s'
+              transition: 'all 0.2s', fontSize: '0.9rem'
             }} onClick={fetchLogs}>
               Manuell Aktualisieren
             </button>
           </div>
+
+          {/* Category Filter Chips */}
+          <div className="flex gap-2 mb-6" style={{ overflowX: 'auto', paddingBottom: '8px' }}>
+            {[
+              { id: 'all', label: 'Alle', icon: <Activity size={14} /> },
+              { id: 'werkstatt', label: 'Werkstatt', icon: <Wrench size={14} /> },
+              { id: 'verkauf', label: 'Verkauf', icon: <User size={14} /> },
+              { id: 'gefiltert', label: 'Gefiltert', icon: <CheckCircle size={14} /> }
+            ].map((cat) => (
+              <button
+                key={cat.id}
+                onClick={() => setFilterCategory(cat.id)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '8px 16px',
+                  borderRadius: '100px',
+                  border: '1px solid',
+                  borderColor: filterCategory === cat.id ? 'var(--primary)' : 'var(--border)',
+                  background: filterCategory === cat.id ? 'rgba(37, 99, 235, 0.1)' : 'transparent',
+                  color: filterCategory === cat.id ? 'var(--primary)' : 'var(--text-muted)',
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap',
+                  transition: 'all 0.2s',
+                  fontSize: '0.9rem',
+                  fontWeight: filterCategory === cat.id ? '600' : '400'
+                }}
+              >
+                {cat.icon}
+                {cat.label}
+              </button>
+            ))}
+          </div>
           
           <div className="table-container">
-            <table>
+            {/* Desktop Table View */}
+            <table className="desktop-table">
               <thead>
                 <tr>
                   <th>Zeitpunkt</th>
@@ -591,10 +739,10 @@ function App() {
                 </tr>
               </thead>
               <tbody>
-                {logs.length === 0 && !loading ? (
+                {filteredLogs.length === 0 && !loading ? (
                   <tr><td colSpan="4" style={{textAlign: 'center', padding: '32px'}}>Keine Daten gefunden.</td></tr>
                 ) : (
-                  (showAllLogs ? logs : logs.slice(0, 50)).map((log, idx) => {
+                  (showAllLogs ? filteredLogs : filteredLogs.slice(0, 50)).map((log, idx) => {
                     return (
                       <tr key={log.id || idx}>
                         <td style={{ minWidth: '150px' }}>
@@ -665,6 +813,43 @@ function App() {
                 )}
               </tbody>
             </table>
+
+            {/* Mobile Card View */}
+            <div className="mobile-cards">
+              {filteredLogs.length === 0 && !loading ? (
+                <div style={{textAlign: 'center', padding: '32px'}}>Keine Daten gefunden.</div>
+              ) : (
+                (showAllLogs ? filteredLogs : filteredLogs.slice(0, 50)).map((log, idx) => (
+                  <div key={log.id || idx} className="mobile-card glass-panel" onClick={() => toggleRow(log.id || idx)} style={{ marginBottom: '12px', padding: '16px' }}>
+                    <div className="flex justify-between items-start mb-3">
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{log.fullTimestamp}</div>
+                      <div>
+                        {log.category === 'werkstatt' ? (
+                          <span className="badge badge-primary">Werkstatt</span>
+                        ) : log.category === 'verkauf' ? (
+                          <span className="badge badge-success">Verkauf</span>
+                        ) : (
+                          <span className="badge">Gefiltert</span>
+                        )}
+                      </div>
+                    </div>
+                    <div style={{ fontSize: '0.95rem', fontWeight: '500', marginBottom: '8px', color: '#fff' }}>
+                      {expandedRows[log.id || idx] ? log.summary : (log.summary.length > 80 ? log.summary.substring(0, 80) + '...' : log.summary)}
+                    </div>
+                    <div className="mt-2 pt-2" style={{ borderTop: '1px solid var(--border)' }}>
+                      <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '4px' }}>Aktion:</div>
+                      {log.category === 'verkauf' ? (
+                        <span className="text-success text-sm">Rückruf initiiert</span>
+                      ) : log.category === 'werkstatt' ? (
+                        <span className="text-primary text-sm">{log.linkStatus && log.linkStatus.toLowerCase() !== 'nein' ? 'Termin-Link versendet' : 'Telefonat'}</span>
+                      ) : (
+                        <span className="text-muted text-sm">Kein Handlungsbedarf</span>
+                      )}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
 
           {!showAllLogs && logs.length > 50 && (
