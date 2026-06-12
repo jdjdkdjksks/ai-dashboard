@@ -72,10 +72,13 @@ h1 {
 .app-container {
   display: flex;
   min-height: 100vh;
+  width: 100%;
+  overflow-x: hidden;
 }
 
 .sidebar {
   width: 280px;
+  min-height: 100vh;
   border-right: 1px solid var(--border);
   padding: 32px 24px;
   display: flex;
@@ -87,8 +90,10 @@ h1 {
 
 .main-content {
   flex: 1;
+  width: 100%;
   padding: 40px;
   overflow-y: auto;
+  overflow-x: hidden;
 }
 
 /* Mobile Components (Hidden by default) */
@@ -123,6 +128,10 @@ h1 {
 
 /* Responsive Overrides */
 @media (max-width: 1024px) {
+  .app-container {
+    flex-direction: column;
+  }
+
   .sidebar {
     display: none;
   }
@@ -133,6 +142,7 @@ h1 {
   
   .mobile-header {
     display: flex;
+    width: 100%;
     position: sticky;
     top: 0;
     z-index: 100;
@@ -154,6 +164,7 @@ h1 {
     backdrop-filter: blur(20px);
     border-top: 1px solid var(--border);
     padding: 12px 10px;
+    padding-bottom: calc(12px + env(safe-area-inset-bottom));
     justify-content: space-around;
     z-index: 1000;
   }
@@ -166,6 +177,7 @@ h1 {
     color: var(--text-muted);
     font-size: 0.7rem;
     transition: all 0.2s;
+    cursor: pointer;
   }
   
   .bottom-nav-item.active {
@@ -174,12 +186,15 @@ h1 {
   
   .main-content {
     padding: 20px;
-    padding-bottom: 100px; /* Space for bottom nav */
+    padding-top: 24px;
+    padding-bottom: 120px; /* More space for bottom nav + safe area */
+    width: 100%;
   }
   
   .mobile-stats-header {
     display: block;
     margin-bottom: 24px;
+    width: 100%;
   }
   
   .desktop-table {
@@ -188,10 +203,16 @@ h1 {
   
   .mobile-cards {
     display: block;
+    width: 100%;
   }
   
   .dashboard-grid {
     grid-template-columns: 1fr;
+    width: 100%;
+  }
+  
+  .glass-panel {
+    width: 100%;
   }
   
   h1 {

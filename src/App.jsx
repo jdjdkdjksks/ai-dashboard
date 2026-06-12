@@ -864,7 +864,7 @@ function App() {
                 style={{ maxWidth: '300px', margin: '0 auto', background: 'rgba(255, 255, 255, 0.05)', border: '1px solid var(--border)', boxShadow: 'none' }}
                 onClick={() => setShowAllLogs(true)}
               >
-                Alle Mails anzeigen ({logs.length})
+                Alle Mails anzeigen
               </button>
             </div>
           )}
