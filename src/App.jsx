@@ -569,13 +569,6 @@ function App() {
             <div className="dashboard-grid-large desktop-only">
               <div className="glass-panel">
                 <h3 className="mb-4">E-Mail Kategorien</h3>
-...
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
                 <div style={{ height: '300px' }}>
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={pathDistribution} margin={{top: 10, right: 10, left: -20, bottom: 0}}>
