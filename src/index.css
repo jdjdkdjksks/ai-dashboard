@@ -55,6 +55,7 @@ body {
 .main-content {
   flex: 1;
   width: 100%;
+  max-width: 100%;
   padding: 40px;
   overflow-y: auto;
   overflow-x: hidden;
@@ -69,6 +70,7 @@ body {
   border-radius: 16px;
   padding: 24px;
   transition: all 0.3s ease;
+  width: 100%;
 }
 
 .glass-panel:hover {
@@ -78,19 +80,19 @@ body {
 
 /* Desktop Grid & Full-Width Logic */
 .dashboard-grid-full {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  display: grid !important;
+  grid-template-columns: 1fr 1fr 1fr 1fr !important;
   gap: 24px;
   margin-bottom: 32px;
-  width: 100%;
+  width: 100% !important;
 }
 
 .dashboard-charts-desktop {
-  display: grid;
-  grid-template-columns: 2fr 1fr;
+  display: grid !important;
+  grid-template-columns: 2fr 1fr !important;
   gap: 24px;
   margin-bottom: 32px;
-  width: 100%;
+  width: 100% !important;
 }
 
 /* Desktop Stat Boxes */
