@@ -647,7 +647,7 @@ function App() {
             </div>
 
             <div className="dashboard-grid-large desktop-only">
-              <div className="glass-panel">
+              <div className="glass-panel" style={{ gridColumn: 'span 2' }}>
                 <h3 className="mb-4">E-Mail Kategorien</h3>
                 <div style={{ height: '300px' }}>
                   <ResponsiveContainer width="100%" height="100%">
@@ -671,7 +671,7 @@ function App() {
                 </div>
               </div>
 
-              <div className="glass-panel">
+              <div className="glass-panel" style={{ gridColumn: 'span 1' }}>
                 <h3 className="mb-4">E-Mail-Verteilung & Kontakte</h3>
                 <div style={{ display: 'flex', flexDirection: 'column', height: '300px', justifyContent: 'center' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '200px' }}>
