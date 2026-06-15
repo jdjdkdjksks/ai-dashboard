@@ -162,6 +162,18 @@ body {
   display: flex;
 }
 
+.status-badge-premium {
+  padding: 8px 16px !important;
+  border-radius: 99px !important;
+  border: 1px solid rgba(16, 185, 129, 0.2) !important;
+  background: rgba(16, 185, 129, 0.05) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  white-space: nowrap !important;
+  min-width: fit-content !important;
+}
+
 /* Badges */
 .badge {
   display: inline-flex;

@@ -482,10 +482,10 @@ function App() {
             )}
             
             {/* Speed-Metrik Badge */}
-            <div className="glass-panel" style={{ padding: '8px 16px', borderRadius: '99px', border: '1px solid rgba(16, 185, 129, 0.2)', background: 'rgba(16, 185, 129, 0.05)' }}>
-              <span className="flex items-center gap-2 text-sm" style={{ color: 'var(--success)', fontWeight: '600' }}>
-                <Activity size={14} style={{ color: 'var(--success)' }} />
-                Ø Antwortzeit: &lt; 60 Sek.
+            <div className="glass-panel status-badge-premium">
+              <span className="flex items-center gap-2 text-sm" style={{ color: 'var(--success)', fontWeight: '600', whiteSpace: 'nowrap' }}>
+                <Activity size={14} />
+                Ø Antwortzeit: &lt; 60s
               </span>
             </div>
 
