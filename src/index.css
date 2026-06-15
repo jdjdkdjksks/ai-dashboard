@@ -131,9 +131,19 @@ h1 {
   display: flex;
 }
 
+.mobile-only {
+  display: none !important;
+}
+
 @media (max-width: 1024px) {
   .desktop-only {
     display: none !important;
+  }
+  .mobile-only {
+    display: block !important;
+  }
+  .mobile-compact-grid.mobile-only {
+    display: grid !important;
   }
 }
 

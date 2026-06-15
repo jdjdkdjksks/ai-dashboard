@@ -540,7 +540,67 @@ function App() {
               </div>
             </div>
 
-            <div className="dashboard-grid mobile-compact-grid">
+            {/* Desktop Stats Grid */}
+            <div className="dashboard-grid desktop-only" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
+              <div className="glass-panel stat-card" style={{ flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'space-between', minHeight: '140px', padding: '20px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    E-Mails gesamt
+                  </span>
+                  <div style={{ color: 'var(--primary)', background: 'rgba(37, 99, 235, 0.1)', width: '36px', height: '36px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Mail size={18} />
+                  </div>
+                </div>
+                <div style={{ fontSize: '2rem', fontWeight: '700', color: '#fff', lineHeight: '1.2', marginTop: '16px' }}>
+                  {statsLogs.length}
+                </div>
+              </div>
+              
+              <div className="glass-panel stat-card" style={{ flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'space-between', minHeight: '140px', padding: '20px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    Automatisch gefiltert
+                  </span>
+                  <div style={{ color: '#9ca3af', background: 'rgba(255, 255, 255, 0.05)', width: '36px', height: '36px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <CheckCircle size={18} />
+                  </div>
+                </div>
+                <div style={{ fontSize: '2rem', fontWeight: '700', color: '#fff', lineHeight: '1.2', marginTop: '16px' }}>
+                  {filteredCount}
+                </div>
+              </div>
+
+              <div className="glass-panel stat-card" style={{ flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'space-between', minHeight: '140px', padding: '20px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    Kunden-Aktionen
+                  </span>
+                  <div style={{ color: 'var(--secondary)', background: 'rgba(59, 130, 246, 0.1)', width: '36px', height: '36px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Activity size={18} />
+                  </div>
+                </div>
+                <div style={{ fontSize: '2rem', fontWeight: '700', color: '#fff', lineHeight: '1.2', marginTop: '16px' }}>
+                  {statsLogs.filter(l => l.category === 'werkstatt' || l.category === 'verkauf').length}
+                </div>
+              </div>
+
+              <div className="glass-panel stat-card" style={{ flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'space-between', minHeight: '140px', padding: '20px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    Arbeitsersparnis
+                  </span>
+                  <div style={{ color: 'var(--warning)', background: 'rgba(245, 158, 11, 0.1)', width: '36px', height: '36px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Clock size={18} />
+                  </div>
+                </div>
+                <div style={{ fontSize: '2rem', fontWeight: '700', color: '#fff', lineHeight: '1.2', marginTop: '16px' }}>
+                  ~ {savedHours} Std.
+                </div>
+              </div>
+            </div>
+
+            {/* Mobile Stats Grid */}
+            <div className="dashboard-grid mobile-only mobile-compact-grid">
               <div className="glass-panel stat-card-compact">
                 <div className="stat-label">Gesamt</div>
                 <div className="stat-value-small">{statsLogs.length}</div>
