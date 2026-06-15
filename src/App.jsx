@@ -517,7 +517,7 @@ function App() {
         {activeTab === 'dashboard' && (
           <div className="animate-fade-in" style={{ animationDelay: '0.1s' }}>
             {/* Timeframe Selector for Dashboard */}
-            <div className="flex justify-between items-center mb-10">
+            <div className="flex justify-between items-center timeframe-selector-wrapper">
               <h2 className="text-lg font-semibold desktop-only">Statistik-Zeitraum</h2>
               <div className="segmented-control glass-panel mobile-time-selector" style={{ padding: '4px', borderRadius: '12px', display: 'flex', gap: '4px', width: '100%', maxWidth: '400px' }}>
                 {['all', 'day', 'week', 'month'].map((t) => (
