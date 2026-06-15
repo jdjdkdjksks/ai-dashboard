@@ -503,12 +503,15 @@ function App() {
           </div>
         </header>
 
-        {/* Mobile Header Stats Summary removed as requested */}
-        <div className="mobile-only-header animate-fade-in" style={{ marginBottom: '24px', borderBottom: '1px solid var(--border)', paddingBottom: '16px' }}>
-           <h1 className="text-xl font-bold" style={{ color: '#fff', marginBottom: '4px' }}>
+        {/* Mobile Header */}
+        <div className="mobile-only-header animate-fade-in" style={{ marginBottom: '20px' }}>
+           <h1 className="text-xl font-bold" style={{ color: '#fff', marginBottom: '4px', letterSpacing: '-0.02em' }}>
              Dashboard
            </h1>
-           <p className="text-muted text-xs uppercase tracking-wider">{currentUser.name}</p>
+           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+             <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--success)', boxShadow: '0 0 8px var(--success)' }}></div>
+             <p className="text-muted text-xs uppercase tracking-widest" style={{ fontWeight: '500' }}>{currentUser.name}</p>
+           </div>
         </div>
 
         {activeTab === 'dashboard' && (
@@ -516,7 +519,7 @@ function App() {
             {/* Timeframe Selector for Dashboard */}
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-lg font-semibold desktop-only">Statistik-Zeitraum</h2>
-              <div className="segmented-control glass-panel" style={{ padding: '4px', borderRadius: '12px', display: 'flex', gap: '4px', width: '100%', maxWidth: '400px' }}>
+              <div className="segmented-control glass-panel mobile-time-selector" style={{ padding: '4px', borderRadius: '12px', display: 'flex', gap: '4px', width: '100%', maxWidth: '400px' }}>
                 {['all', 'day', 'week', 'month'].map((t) => (
                   <button 
                     key={t}
@@ -531,10 +534,11 @@ function App() {
                       background: savingsTimeframe === t ? 'var(--primary)' : 'transparent',
                       color: savingsTimeframe === t ? '#fff' : 'var(--text-muted)',
                       cursor: 'pointer',
-                      transition: 'all 0.2s'
+                      transition: 'all 0.2s',
+                      fontWeight: savingsTimeframe === t ? '600' : '400'
                     }}
                   >
-                    {t === 'all' ? 'Alle' : t === 'day' ? 'Tag' : t === 'week' ? 'Woche' : 'Monat'}
+                    {t === 'all' ? 'Alle' : t === 'day' ? 'Heute' : t === 'week' ? 'Woche' : 'Monat'}
                   </button>
                 ))}
               </div>
@@ -602,27 +606,43 @@ function App() {
             {/* Mobile Stats Grid */}
             <div className="dashboard-grid mobile-only mobile-compact-grid">
               <div className="glass-panel stat-card-compact">
-                <div className="stat-label">Gesamt</div>
-                <div className="stat-value-small">{statsLogs.length}</div>
-                <Mail size={14} className="stat-icon-mini" />
+                <div className="stat-icon-container">
+                  <Mail size={16} />
+                </div>
+                <div className="stat-content-small">
+                  <div className="stat-label">Gesamt</div>
+                  <div className="stat-value-small">{statsLogs.length}</div>
+                </div>
               </div>
               
               <div className="glass-panel stat-card-compact">
-                <div className="stat-label">Gefiltert</div>
-                <div className="stat-value-small">{filteredCount}</div>
-                <CheckCircle size={14} className="stat-icon-mini" />
+                <div className="stat-icon-container filter">
+                  <CheckCircle size={16} />
+                </div>
+                <div className="stat-content-small">
+                  <div className="stat-label">Gefiltert</div>
+                  <div className="stat-value-small">{filteredCount}</div>
+                </div>
               </div>
 
               <div className="glass-panel stat-card-compact">
-                <div className="stat-label">Aktionen</div>
-                <div className="stat-value-small">{statsLogs.filter(l => l.category === 'werkstatt' || l.category === 'verkauf').length}</div>
-                <Activity size={14} className="stat-icon-mini" />
+                <div className="stat-icon-container action">
+                  <Activity size={16} />
+                </div>
+                <div className="stat-content-small">
+                  <div className="stat-label">Aktionen</div>
+                  <div className="stat-value-small">{statsLogs.filter(l => l.category === 'werkstatt' || l.category === 'verkauf').length}</div>
+                </div>
               </div>
 
               <div className="glass-panel stat-card-compact highlight">
-                <div className="stat-label">Ersparnis</div>
-                <div className="stat-value-small">{savedHours}h</div>
-                <Clock size={14} className="stat-icon-mini" />
+                <div className="stat-icon-container save">
+                  <Clock size={16} />
+                </div>
+                <div className="stat-content-small">
+                  <div className="stat-label">Ersparnis</div>
+                  <div className="stat-value-small">{savedHours}h</div>
+                </div>
               </div>
             </div>
 
