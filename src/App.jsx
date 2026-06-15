@@ -485,7 +485,7 @@ function App() {
             <div className="glass-panel" style={{ padding: '8px 16px', borderRadius: '99px', border: '1px solid rgba(16, 185, 129, 0.2)', background: 'rgba(16, 185, 129, 0.05)' }}>
               <span className="flex items-center gap-2 text-sm" style={{ color: 'var(--success)', fontWeight: '600' }}>
                 <Activity size={14} style={{ color: 'var(--success)' }} />
-                Ø Antwortzeit: &lt; 60 Sek.
+                Ø Antwortzeit: < 60 Sek.
               </span>
             </div>
 
@@ -545,60 +545,107 @@ function App() {
             </div>
 
             {/* Desktop Stats Grid */}
-            <div className="dashboard-grid desktop-only" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
-              <div className="glass-panel stat-card" style={{ flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'space-between', minHeight: '140px', padding: '20px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
-                  <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                    E-Mails gesamt
-                  </span>
-                  <div style={{ color: 'var(--primary)', background: 'rgba(37, 99, 235, 0.1)', width: '36px', height: '36px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <Mail size={18} />
-                  </div>
+            <div className="dashboard-grid-full desktop-only">
+              <div className="glass-panel stat-box-desktop">
+                <div className="stat-box-header">
+                  <span className="stat-box-label">E-Mails gesamt</span>
+                  <div className="stat-box-icon primary"><Mail size={18} /></div>
                 </div>
-                <div style={{ fontSize: '2rem', fontWeight: '700', color: '#fff', lineHeight: '1.2', marginTop: '16px' }}>
-                  {statsLogs.length}
-                </div>
+                <div className="stat-box-value">{statsLogs.length}</div>
               </div>
               
-              <div className="glass-panel stat-card" style={{ flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'space-between', minHeight: '140px', padding: '20px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
-                  <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                    Automatisch gefiltert
-                  </span>
-                  <div style={{ color: '#9ca3af', background: 'rgba(255, 255, 255, 0.05)', width: '36px', height: '36px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <CheckCircle size={18} />
-                  </div>
+              <div className="glass-panel stat-box-desktop">
+                <div className="stat-box-header">
+                  <span className="stat-box-label">Automatisch gefiltert</span>
+                  <div className="stat-box-icon muted"><CheckCircle size={18} /></div>
                 </div>
-                <div style={{ fontSize: '2rem', fontWeight: '700', color: '#fff', lineHeight: '1.2', marginTop: '16px' }}>
-                  {filteredCount}
+                <div className="stat-box-value">{filteredCount}</div>
+              </div>
+
+              <div className="glass-panel stat-box-desktop">
+                <div className="stat-box-header">
+                  <span className="stat-box-label">Kunden-Aktionen</span>
+                  <div className="stat-box-icon secondary"><Activity size={18} /></div>
+                </div>
+                <div className="stat-box-value">{statsLogs.filter(l => l.category === 'werkstatt' || l.category === 'verkauf').length}</div>
+              </div>
+
+              <div className="glass-panel stat-box-desktop highlight-desktop">
+                <div className="stat-box-header">
+                  <span className="stat-box-label">Arbeitsersparnis</span>
+                  <div className="stat-box-icon warning"><Clock size={18} /></div>
+                </div>
+                <div className="stat-box-value">~ {savedHours} Std.</div>
+              </div>
+            </div>
+
+            {/* Desktop Charts Row */}
+            <div className="dashboard-charts-desktop desktop-only">
+              <div className="glass-panel chart-box-wide">
+                <h3 className="mb-4">E-Mail Kategorien</h3>
+                <div style={{ height: '300px' }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={pathDistribution} margin={{top: 10, right: 10, left: -20, bottom: 0}}>
+                      <XAxis dataKey="name" stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} />
+                      <YAxis stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} allowDecimals={false} />
+                      <Tooltip 
+                        contentStyle={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '8px', color: '#fff' }}
+                        cursor={{fill: 'rgba(255,255,255,0.05)'}}
+                        itemStyle={{color: '#fff'}}
+                      />
+                      <Bar dataKey="value" fill="url(#colorGradient)" radius={[4, 4, 0, 0]} maxBarSize={60} />
+                      <defs>
+                        <linearGradient id="colorGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="var(--primary)" />
+                          <stop offset="100%" stopColor="var(--secondary)" />
+                        </linearGradient>
+                      </defs>
+                    </BarChart>
+                  </ResponsiveContainer>
                 </div>
               </div>
 
-              <div className="glass-panel stat-card" style={{ flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'space-between', minHeight: '140px', padding: '20px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
-                  <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                    Kunden-Aktionen
-                  </span>
-                  <div style={{ color: 'var(--secondary)', background: 'rgba(59, 130, 246, 0.1)', width: '36px', height: '36px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <Activity size={18} />
+              <div className="glass-panel chart-box-narrow">
+                <h3 className="mb-4">E-Mail-Verteilung</h3>
+                <div style={{ display: 'flex', flexDirection: 'column', height: '300px', justifyContent: 'center' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '200px' }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={mailChartData}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={55}
+                          outerRadius={75}
+                          paddingAngle={5}
+                          dataKey="value"
+                        >
+                          {mailChartData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={MAIL_COLORS[entry.name] || 'var(--secondary)'} />
+                          ))}
+                        </Pie>
+                        <Tooltip 
+                          contentStyle={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '8px', color: '#fff' }}
+                          itemStyle={{color: '#fff'}}
+                        />
+                      </PieChart>
+                    </ResponsiveContainer>
                   </div>
-                </div>
-                <div style={{ fontSize: '2rem', fontWeight: '700', color: '#fff', lineHeight: '1.2', marginTop: '16px' }}>
-                  {statsLogs.filter(l => l.category === 'werkstatt' || l.category === 'verkauf').length}
-                </div>
-              </div>
-
-              <div className="glass-panel stat-card" style={{ flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'space-between', minHeight: '140px', padding: '20px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
-                  <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                    Arbeitsersparnis
-                  </span>
-                  <div style={{ color: 'var(--warning)', background: 'rgba(245, 158, 11, 0.1)', width: '36px', height: '36px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <Clock size={18} />
+                  
+                  {/* Custom Legend */}
+                  <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', flexWrap: 'wrap', marginTop: '16px' }}>
+                    {mailChartData.map((entry, idx) => (
+                      <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.85rem' }}>
+                        <span style={{ 
+                          width: '10px', height: '10px', borderRadius: '50%', 
+                          backgroundColor: MAIL_COLORS[entry.name] || 'var(--secondary)',
+                          display: 'inline-block'
+                        }}></span>
+                        <span style={{ color: 'var(--text-muted)' }}>{entry.name}:</span>
+                        <span style={{ fontWeight: 'bold', color: '#fff' }}>{hasMails ? entry.value : 0}</span>
+                      </div>
+                    ))}
                   </div>
-                </div>
-                <div style={{ fontSize: '2rem', fontWeight: '700', color: '#fff', lineHeight: '1.2', marginTop: '16px' }}>
-                  ~ {savedHours} Std.
                 </div>
               </div>
             </div>
@@ -642,76 +689,6 @@ function App() {
                 <div className="stat-content-small">
                   <div className="stat-label">Ersparnis</div>
                   <div className="stat-value-small">{savedHours}h</div>
-                </div>
-              </div>
-            </div>
-
-            <div className="dashboard-grid-large desktop-only">
-              <div className="glass-panel" style={{ gridColumn: 'span 2' }}>
-                <h3 className="mb-4">E-Mail Kategorien</h3>
-                <div style={{ height: '300px' }}>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={pathDistribution} margin={{top: 10, right: 10, left: -20, bottom: 0}}>
-                      <XAxis dataKey="name" stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} />
-                      <YAxis stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} allowDecimals={false} />
-                      <Tooltip 
-                        contentStyle={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '8px', color: '#fff' }}
-                        cursor={{fill: 'rgba(255,255,255,0.05)'}}
-                        itemStyle={{color: '#fff'}}
-                      />
-                      <Bar dataKey="value" fill="url(#colorGradient)" radius={[4, 4, 0, 0]} maxBarSize={60} />
-                      <defs>
-                        <linearGradient id="colorGradient" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="var(--primary)" />
-                          <stop offset="100%" stopColor="var(--secondary)" />
-                        </linearGradient>
-                      </defs>
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-
-              <div className="glass-panel" style={{ gridColumn: 'span 1' }}>
-                <h3 className="mb-4">E-Mail-Verteilung & Kontakte</h3>
-                <div style={{ display: 'flex', flexDirection: 'column', height: '300px', justifyContent: 'center' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '200px' }}>
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie
-                          data={mailChartData}
-                          cx="50%"
-                          cy="50%"
-                          innerRadius={55}
-                          outerRadius={75}
-                          paddingAngle={5}
-                          dataKey="value"
-                        >
-                          {mailChartData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={MAIL_COLORS[entry.name] || 'var(--secondary)'} />
-                          ))}
-                        </Pie>
-                        <Tooltip 
-                          contentStyle={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '8px', color: '#fff' }}
-                          itemStyle={{color: '#fff'}}
-                        />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  </div>
-                  
-                  {/* Custom Legend */}
-                  <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', flexWrap: 'wrap', marginTop: '16px' }}>
-                    {mailChartData.map((entry, idx) => (
-                      <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.85rem' }}>
-                        <span style={{ 
-                          width: '10px', height: '10px', borderRadius: '50%', 
-                          backgroundColor: MAIL_COLORS[entry.name] || 'var(--secondary)',
-                          display: 'inline-block'
-                        }}></span>
-                        <span style={{ color: 'var(--text-muted)' }}>{entry.name}:</span>
-                        <span style={{ fontWeight: 'bold', color: '#fff' }}>{hasMails ? entry.value : 0}</span>
-                      </div>
-                    ))}
-                  </div>
                 </div>
               </div>
             </div>
@@ -893,7 +870,7 @@ function App() {
             </div>
           </div>
 
-          {!showAllLogs && logs.length > 50 && (
+          {!showAllLogs && filteredLogs.length > 50 && (
             <div style={{ 
               marginTop: '24px', 
               paddingTop: '24px', 
@@ -910,7 +887,7 @@ function App() {
             </div>
           )}
           
-          {showAllLogs && logs.length > 50 && (
+          {showAllLogs && filteredLogs.length > 50 && (
             <div style={{ 
               marginTop: '24px', 
               paddingTop: '24px', 
