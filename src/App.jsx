@@ -6,7 +6,8 @@ import {
 import { 
   Activity, Mail, Wrench, 
   CheckCircle, Lock, User, Clock,
-  MessageSquare, Send, PieChart as PieChartIcon
+  MessageSquare, Send, PieChart as PieChartIcon,
+  Car, Calendar, HelpCircle
 } from 'lucide-react';
 import { CUSTOMERS } from './customers';
 import './index.css';
@@ -269,14 +270,23 @@ function App() {
             }
           }
 
-          let category = row.Kategorie || row.Pfad || 'Allgemein';
-          if (typeof category === 'string' && category.trim() === '') category = 'Allgemein';
+          let rawCategory = (row.Kategorie || row.Pfad || 'Allgemein').toString().trim().toLowerCase();
+          let category = 'gefiltert';
+          if (rawCategory.includes('fahrzeug') || rawCategory.includes('verkauf') || rawCategory.includes('interesse')) {
+            category = 'fahrzeug_interesse';
+          } else if (rawCategory.includes('termin') || rawCategory.includes('werkstatt')) {
+            category = 'termin';
+          } else if (rawCategory.includes('ersatz') || rawCategory.includes('teile')) {
+            category = 'ersatzteile';
+          } else if (rawCategory.includes('techni') || rawCategory.includes('frage')) {
+            category = 'technische_fragen';
+          }
 
           return {
             id: row.row_number || i,
             fullTimestamp: fullTimestamp,
             timestamp: row.Zeit ? new Date(row.Zeit).getTime() : Date.now(),
-            category: (category || '').toString().toLowerCase(),
+            category: category,
             summary: row.Kundenanliegen || row.Zusammenfassung || 'Keine Details',
             linkStatus: row['Link - versendet'] || ''
           };
@@ -330,26 +340,25 @@ function App() {
   const statsLogs = getFilteredByTimeframe(logs, savingsTimeframe);
 
   // Gesparte Arbeitszeit logic (based on filtered statsLogs):
-  // - 3 minutes per filtered email (category !== 'werkstatt' && category !== 'verkauf')
-  // - 8 minutes per answered email (category === 'werkstatt' || category === 'verkauf')
-  const filteredCount = statsLogs.filter(l => l.category !== 'werkstatt' && l.category !== 'verkauf').length;
-  const processedCount = statsLogs.filter(l => l.category === 'werkstatt' || l.category === 'verkauf').length;
+  // - 3 minutes per filtered email (category === 'gefiltert')
+  // - 8 minutes per answered/processed email (category !== 'gefiltert')
+  const filteredCount = statsLogs.filter(l => l.category === 'gefiltert').length;
+  const processedCount = statsLogs.filter(l => l.category !== 'gefiltert').length;
   const savedMinutes = (filteredCount * 3) + (processedCount * 8);
   const savedHours = Math.round(savedMinutes / 60);
 
   // Filter logs for the table based on category
   const filteredLogs = logs.filter(log => {
     if (filterCategory === 'all') return true;
-    if (filterCategory === 'werkstatt') return log.category === 'werkstatt';
-    if (filterCategory === 'verkauf') return log.category === 'verkauf';
-    if (filterCategory === 'gefiltert') return log.category !== 'werkstatt' && log.category !== 'verkauf';
-    return true;
+    return log.category === filterCategory;
   });
 
   const pathDistribution = statsLogs.reduce((acc, log) => {
     let categoryName = 'Automatisch gefiltert';
-    if (log.category === 'werkstatt') categoryName = 'Werkstatt';
-    else if (log.category === 'verkauf') categoryName = 'Verkauf';
+    if (log.category === 'fahrzeug_interesse') categoryName = 'Fahrzeug-Interesse';
+    else if (log.category === 'termin') categoryName = 'Termin';
+    else if (log.category === 'ersatzteile') categoryName = 'Ersatzteile';
+    else if (log.category === 'technische_fragen') categoryName = 'Technische Fragen';
     
     const existing = acc.find(item => item.name === categoryName);
     if (existing) existing.value += 1;
@@ -358,19 +367,27 @@ function App() {
   }, []);
   pathDistribution.sort((a, b) => b.value - a.value);
 
-  // Split total incoming emails into Filtered, Werkstatt, and Verkauf
+  // Split total incoming emails into specific categories
   const totalMailsDistribution = [
     { 
       name: 'Automatisch gefiltert', 
       value: filteredCount 
     },
     { 
-      name: 'Werkstatt-Anfragen', 
-      value: statsLogs.filter(l => l.category === 'werkstatt').length 
+      name: 'Fahrzeug-Interesse', 
+      value: statsLogs.filter(l => l.category === 'fahrzeug_interesse').length 
     },
     { 
-      name: 'Verkauf-Anfragen', 
-      value: statsLogs.filter(l => l.category === 'verkauf').length 
+      name: 'Termin-Anfragen', 
+      value: statsLogs.filter(l => l.category === 'termin').length 
+    },
+    { 
+      name: 'Ersatzteile', 
+      value: statsLogs.filter(l => l.category === 'ersatzteile').length 
+    },
+    { 
+      name: 'Technische Fragen', 
+      value: statsLogs.filter(l => l.category === 'technische_fragen').length 
     }
   ];
   
@@ -381,8 +398,10 @@ function App() {
 
   const MAIL_COLORS = {
     'Automatisch gefiltert': '#4b5563', // Neutral gray-blue for filters
-    'Werkstatt-Anfragen': 'var(--primary)', // Indigo for Werkstatt
-    'Verkauf-Anfragen': 'var(--success)', // Green for Verkauf
+    'Fahrzeug-Interesse': 'var(--success)', // Green
+    'Termin-Anfragen': 'var(--primary)', // Indigo
+    'Ersatzteile': '#f59e0b', // Amber/Orange
+    'Technische Fragen': '#a855f7', // Purple
     'Keine E-Mails': '#374151'
   };
 
@@ -715,8 +734,10 @@ function App() {
           <div className="flex gap-2 mb-6" style={{ overflowX: 'auto', paddingBottom: '8px' }}>
             {[
               { id: 'all', label: 'Alle', icon: <Activity size={14} /> },
-              { id: 'werkstatt', label: 'Werkstatt', icon: <Wrench size={14} /> },
-              { id: 'verkauf', label: 'Verkauf', icon: <User size={14} /> },
+              { id: 'fahrzeug_interesse', label: 'Fahrzeug-Interesse', icon: <Car size={14} /> },
+              { id: 'termin', label: 'Termin', icon: <Calendar size={14} /> },
+              { id: 'ersatzteile', label: 'Ersatzteile', icon: <Wrench size={14} /> },
+              { id: 'technische_fragen', label: 'Technische Fragen', icon: <HelpCircle size={14} /> },
               { id: 'gefiltert', label: 'Gefiltert', icon: <CheckCircle size={14} /> }
             ].map((cat) => (
               <button
@@ -767,15 +788,25 @@ function App() {
                           <div style={{fontWeight: 500, fontSize: '0.9rem'}}>{log.fullTimestamp}</div>
                         </td>
                         <td>
-                          {log.category === 'werkstatt' ? (
-                            <span className="badge badge-primary">
-                              <Wrench size={12} style={{marginRight: '4px'}}/>
-                              Werkstatt
-                            </span>
-                          ) : log.category === 'verkauf' ? (
+                          {log.category === 'fahrzeug_interesse' ? (
                             <span className="badge badge-success" style={{ border: '1px solid rgba(16, 185, 129, 0.2)', background: 'rgba(16, 185, 129, 0.1)', color: 'var(--success)' }}>
-                              <User size={12} style={{marginRight: '4px'}}/>
-                              Verkauf
+                              <Car size={12} style={{marginRight: '4px'}}/>
+                              Fahrzeug-Interesse
+                            </span>
+                          ) : log.category === 'termin' ? (
+                            <span className="badge badge-primary">
+                              <Calendar size={12} style={{marginRight: '4px'}}/>
+                              Termin
+                            </span>
+                          ) : log.category === 'ersatzteile' ? (
+                            <span className="badge" style={{ border: '1px solid rgba(245, 158, 11, 0.2)', background: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b' }}>
+                              <Wrench size={12} style={{marginRight: '4px'}}/>
+                              Ersatzteile
+                            </span>
+                          ) : log.category === 'technische_fragen' ? (
+                            <span className="badge" style={{ border: '1px solid rgba(168, 85, 247, 0.2)', background: 'rgba(168, 85, 247, 0.1)', color: '#a855f7' }}>
+                              <HelpCircle size={12} style={{marginRight: '4px'}}/>
+                              Tech. Fragen
                             </span>
                           ) : (
                             <span className="badge" style={{ border: '1px solid rgba(255, 255, 255, 0.1)', background: 'rgba(255, 255, 255, 0.04)', color: 'var(--text-muted)' }}>
@@ -805,11 +836,11 @@ function App() {
                           )}
                         </td>
                         <td>
-                          {log.category === 'verkauf' ? (
+                          {log.category === 'fahrzeug_interesse' ? (
                             <span className="badge badge-success" style={{ border: '1px solid rgba(16, 185, 129, 0.2)', background: 'rgba(16, 185, 129, 0.1)', color: 'var(--success)' }}>
                               Rückruf initiiert
                             </span>
-                          ) : log.category === 'werkstatt' ? (
+                          ) : log.category === 'termin' ? (
                             log.linkStatus && log.linkStatus.toLowerCase() !== 'nein' ? (
                               <span className="badge badge-primary">
                                 Termin-Link versendet
@@ -819,6 +850,14 @@ function App() {
                                 Telefonat
                               </span>
                             )
+                          ) : log.category === 'ersatzteile' ? (
+                            <span className="badge" style={{ border: '1px solid rgba(245, 158, 11, 0.2)', background: 'rgba(245, 158, 11, 0.08)', color: '#f59e0b' }}>
+                              Verfügbarkeit geprüft
+                            </span>
+                          ) : log.category === 'technische_fragen' ? (
+                            <span className="badge" style={{ border: '1px solid rgba(168, 85, 247, 0.2)', background: 'rgba(168, 85, 247, 0.08)', color: '#a855f7' }}>
+                              KI-Antwort generiert
+                            </span>
                           ) : (
                             <span className="badge" style={{ background: 'rgba(255, 255, 255, 0.05)', color: 'var(--text-muted)', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
                               Kein Handlungsbedarf
@@ -842,10 +881,14 @@ function App() {
                     <div className="flex justify-between items-start mb-3">
                       <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{log.fullTimestamp}</div>
                       <div>
-                        {log.category === 'werkstatt' ? (
-                          <span className="badge badge-primary">Werkstatt</span>
-                        ) : log.category === 'verkauf' ? (
-                          <span className="badge badge-success">Verkauf</span>
+                        {log.category === 'fahrzeug_interesse' ? (
+                          <span className="badge badge-success">Fahrzeug-Interesse</span>
+                        ) : log.category === 'termin' ? (
+                          <span className="badge badge-primary">Termin</span>
+                        ) : log.category === 'ersatzteile' ? (
+                          <span className="badge" style={{ border: '1px solid rgba(245, 158, 11, 0.2)', background: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b', fontSize: '0.75rem', padding: '2px 8px', borderRadius: '4px' }}>Ersatzteile</span>
+                        ) : log.category === 'technische_fragen' ? (
+                          <span className="badge" style={{ border: '1px solid rgba(168, 85, 247, 0.2)', background: 'rgba(168, 85, 247, 0.1)', color: '#a855f7', fontSize: '0.75rem', padding: '2px 8px', borderRadius: '4px' }}>Tech. Fragen</span>
                         ) : (
                           <span className="badge">Gefiltert</span>
                         )}
@@ -856,10 +899,14 @@ function App() {
                     </div>
                     <div className="mt-2 pt-2" style={{ borderTop: '1px solid var(--border)' }}>
                       <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '4px' }}>Aktion:</div>
-                      {log.category === 'verkauf' ? (
+                      {log.category === 'fahrzeug_interesse' ? (
                         <span className="text-success text-sm">Rückruf initiiert</span>
-                      ) : log.category === 'werkstatt' ? (
+                      ) : log.category === 'termin' ? (
                         <span className="text-primary text-sm">{log.linkStatus && log.linkStatus.toLowerCase() !== 'nein' ? 'Termin-Link versendet' : 'Telefonat'}</span>
+                      ) : log.category === 'ersatzteile' ? (
+                        <span style={{ color: '#f59e0b', fontSize: '0.875rem' }}>Verfügbarkeit geprüft</span>
+                      ) : log.category === 'technische_fragen' ? (
+                        <span style={{ color: '#a855f7', fontSize: '0.875rem' }}>KI-Antwort generiert</span>
                       ) : (
                         <span className="text-muted text-sm">Kein Handlungsbedarf</span>
                       )}
