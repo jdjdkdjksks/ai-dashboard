@@ -229,6 +229,24 @@ function App() {
   const fetchLogs = async () => {
     if (!currentUser || !currentUser.webhook) return;
 
+    // Hilfsfunktion zur Konvertierung verschiedener Datumsformate (inkl. Excel-Seriennummern)
+    const parseWebhookDate = (val) => {
+      if (val === undefined || val === null || val === '') return new Date();
+      
+      const num = Number(val);
+      if (!isNaN(num) && num > 30000 && num < 100000) {
+        // Excel-Basisdatum ist der 30. Dezember 1899
+        return new Date(Math.round((num - 25569) * 86400 * 1000));
+      }
+      
+      let str = String(val).trim();
+      if (str.includes(' ') && !str.includes('T')) {
+        str = str.replace(' ', 'T');
+      }
+      const parsed = new Date(str);
+      return isNaN(parsed.getTime()) ? new Date() : parsed;
+    };
+
     setLoading(true);
     try {
       const response = await fetch(currentUser.webhook);
@@ -250,25 +268,10 @@ function App() {
       
       if (rows.length > 0) {
         const parsedData = rows.map((row, i) => {
-          let fullTimestamp = 'Unbekannt';
-          
-          if (row.Zeit) {
-            const zeitStr = String(row.Zeit);
-            try {
-              // Wenn es ein ISO-String ist oder ein parbares Datum
-              const dateObj = new Date(zeitStr);
-              if (!isNaN(dateObj.getTime())) {
-                const d = dateObj.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
-                const t = dateObj.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-                fullTimestamp = `${d} ${t} Uhr`;
-              } else {
-                // Falls Date() scheitert, versuchen wir manuelles Splitting (falls Format HH:mm:ss oder ähnlich)
-                fullTimestamp = `${new Date().toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })} ${zeitStr.substring(0, 5)} Uhr`;
-              }
-            } catch (e) {
-              fullTimestamp = zeitStr;
-            }
-          }
+          const dateObj = parseWebhookDate(row.Zeit);
+          const d = dateObj.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+          const t = dateObj.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+          const fullTimestamp = `${d} ${t} Uhr`;
 
           let rawCategory = (row.Kategorie || row.Pfad || 'Allgemein').toString().trim().toLowerCase();
           let category = 'gefiltert';
@@ -285,7 +288,7 @@ function App() {
           return {
             id: row.row_number || i,
             fullTimestamp: fullTimestamp,
-            timestamp: row.Zeit ? new Date(row.Zeit).getTime() : Date.now(),
+            timestamp: dateObj.getTime(),
             category: category,
             summary: row.Kundenanliegen || row.Zusammenfassung || 'Keine Details',
             linkStatus: row['Link - versendet'] || ''
