@@ -240,6 +240,29 @@ function App() {
       }
       
       let str = String(val).trim();
+
+      // German date format: DD.MM.YYYY HH:mm[:ss]
+      const germanDateRegex = /^(\d{2})\.(\d{2})\.(\d{4})\s+(\d{2}):(\d{2})(?::(\d{2}))?$/;
+      const match = str.match(germanDateRegex);
+      if (match) {
+        const day = parseInt(match[1], 10);
+        const month = parseInt(match[2], 10) - 1; // 0-indexed month
+        const year = parseInt(match[3], 10);
+        const hour = parseInt(match[4], 10);
+        const minute = parseInt(match[5], 10);
+        const second = match[6] ? parseInt(match[6], 10) : 0;
+        return new Date(year, month, day, hour, minute, second);
+      }
+
+      const germanDateOnlyRegex = /^(\d{2})\.(\d{2})\.(\d{4})$/;
+      const matchOnly = str.match(germanDateOnlyRegex);
+      if (matchOnly) {
+        const day = parseInt(matchOnly[1], 10);
+        const month = parseInt(matchOnly[2], 10) - 1;
+        const year = parseInt(matchOnly[3], 10);
+        return new Date(year, month, day);
+      }
+      
       if (str.includes(' ') && !str.includes('T')) {
         str = str.replace(' ', 'T');
       }
