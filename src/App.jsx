@@ -612,7 +612,7 @@ function App() {
                   <span className="stat-box-label">Kunden-Aktionen</span>
                   <div className="stat-box-icon secondary"><Activity size={18} /></div>
                 </div>
-                <div className="stat-box-value">{statsLogs.filter(l => l.category === 'werkstatt' || l.category === 'verkauf').length}</div>
+                <div className="stat-box-value">{processedCount}</div>
               </div>
 
               <div className="glass-panel stat-box-desktop highlight-desktop">
@@ -723,7 +723,7 @@ function App() {
                 </div>
                 <div className="stat-content-small">
                   <div className="stat-label">Aktionen</div>
-                  <div className="stat-value-small">{statsLogs.filter(l => l.category === 'werkstatt' || l.category === 'verkauf').length}</div>
+                  <div className="stat-value-small">{processedCount}</div>
                 </div>
               </div>
 
