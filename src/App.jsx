@@ -182,6 +182,199 @@ function FeedbackForm({ currentUser }) {
   );
 }
 
+function LogDetailModal({ log, onClose, currentUser }) {
+  const [rating, setRating] = useState(null); // 'sehr_gut', 'gut', 'schlecht', 'sehr_schlecht'
+  const [comment, setComment] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState(null);
+
+  const handleRatingSubmit = async (e) => {
+    e.preventDefault();
+    if (!rating) return;
+    setLoading(true);
+    setError(null);
+
+    const webhookUrl = currentUser.feedbackWebhook;
+    if (!webhookUrl) {
+      setError('Keine Feedback-URL konfiguriert.');
+      setLoading(false);
+      return;
+    }
+
+    const ratingLabels = {
+      sehr_gut: 'Sehr gut 🌟',
+      gut: 'Gut 👍',
+      schlecht: 'Schlecht 👎',
+      sehr_schlecht: 'Sehr schlecht ❌'
+    };
+
+    try {
+      await fetch(webhookUrl, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: {
+          'Content-Type': 'text/plain',
+        },
+        body: JSON.stringify({
+          kunde: currentUser.name,
+          system: 'AutoFlow AI Dashboard - Log Rating',
+          nachricht: `Bewertung für E-Mail-Log #${log.id} (${log.fullTimestamp})\n\nBewertung: ${ratingLabels[rating]}\nKommentar: ${comment || 'Kein Kommentar'}\n\nKundenanliegen: ${log.summary}\n\nLetzte Kundenmail:\n${log.customerEmail || 'Keine Daten'}\n\nKI-Antwort:\n${log.aiResponse || 'Keine Daten'}`,
+          bewertung: ratingLabels[rating],
+          kommentar: comment,
+          log_id: log.id,
+          zeitpunkt_log: log.fullTimestamp,
+          kundenanliegen: log.summary,
+          letzte_kundenmail: log.customerEmail,
+          ki_antwort: log.aiResponse,
+          zeitpunkt_formatiert: new Date().toLocaleString('de-DE', { 
+            day: '2-digit', month: '2-digit', year: 'numeric', 
+            hour: '2-digit', minute: '2-digit' 
+          }) + ' Uhr',
+          iso_timestamp: new Date().toISOString()
+        })
+      });
+
+      setLoading(false);
+      setSubmitted(true);
+    } catch (err) {
+      console.error('Fehler beim Senden des Log-Feedbacks:', err);
+      setError(`Senden fehlgeschlagen: ${err.message}`);
+      setLoading(false);
+    }
+  };
+
+  const getCategoryBadge = (cat) => {
+    if (cat === 'fahrzeug_interesse') return { label: 'Fahrzeug-Interesse', color: 'var(--success)' };
+    if (cat === 'termin') return { label: 'Termin', color: 'var(--primary)' };
+    if (cat === 'ersatzteile') return { label: 'Ersatzteile', color: '#f59e0b' };
+    if (cat === 'technische_fragen') return { label: 'Tech. Fragen', color: '#a855f7' };
+    return { label: 'Gefiltert', color: 'var(--text-muted)' };
+  };
+
+  const badge = getCategoryBadge(log.category);
+
+  return (
+    <div className="modal-backdrop" onClick={onClose}>
+      <div className="modal-content glass-panel animate-scale-in" onClick={e => e.stopPropagation()}>
+        <div className="modal-header">
+          <div className="flex items-center gap-3">
+            <span className="badge" style={{ backgroundColor: 'rgba(255,255,255,0.05)', color: '#fff', fontSize: '0.8rem', padding: '4px 8px', borderRadius: '4px' }}>
+              #{log.id}
+            </span>
+            <span className="badge" style={{ border: `1px solid ${badge.color}`, background: `${badge.color}15`, color: badge.color, display: 'inline-flex', alignItems: 'center', padding: '2px 8px', borderRadius: '4px', fontSize: '0.8rem' }}>
+              {badge.label}
+            </span>
+            <span className="text-muted text-sm">{log.fullTimestamp}</span>
+          </div>
+          <button className="modal-close-btn" onClick={onClose}>&times;</button>
+        </div>
+
+        <div className="modal-body">
+          <div className="modal-section mb-6">
+            <h4 className="text-muted mb-2 text-xs uppercase tracking-wider">Kundenanliegen (Zusammenfassung)</h4>
+            <p className="summary-text" style={{ fontSize: '1.05rem', fontWeight: '500', color: '#fff' }}>{log.summary}</p>
+          </div>
+
+          <div className="email-comparison-grid">
+            <div className="email-box">
+              <h4 className="text-muted mb-2 text-xs uppercase tracking-wider flex justify-between items-center" style={{ width: '100%' }}>
+                <span>Letzte E-Mail vom Kunden</span>
+                {log.customerEmail && (
+                  <button type="button" className="copy-btn" onClick={() => navigator.clipboard.writeText(log.customerEmail)}>Kopieren</button>
+                )}
+              </h4>
+              <div className="email-content-scroll scrollbar">
+                {log.customerEmail ? (
+                  <pre style={{ whiteSpace: 'pre-wrap', fontFamily: 'inherit', color: 'var(--text-main)' }}>
+                    {log.customerEmail}
+                  </pre>
+                ) : (
+                  <p className="text-muted italic">Kein E-Mail-Inhalt vorhanden. (Fügen Sie die Spalte 'Letzte_Kundenmail' in Sheets hinzu.)</p>
+                )}
+              </div>
+            </div>
+
+            <div className="email-box highlighted">
+              <h4 className="text-muted mb-2 text-xs uppercase tracking-wider flex justify-between items-center" style={{ width: '100%' }}>
+                <span>KI-Antwort</span>
+                {log.aiResponse && (
+                  <button type="button" className="copy-btn" onClick={() => navigator.clipboard.writeText(log.aiResponse)}>Kopieren</button>
+                )}
+              </h4>
+              <div className="email-content-scroll scrollbar">
+                {log.aiResponse ? (
+                  <pre style={{ whiteSpace: 'pre-wrap', fontFamily: 'inherit', color: '#fff' }}>
+                    {log.aiResponse}
+                  </pre>
+                ) : (
+                  <p className="text-muted italic">Keine KI-Antwort vorhanden. (Fügen Sie die Spalte 'KI_Antwort' in Sheets hinzu.)</p>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="feedback-section mt-8 pt-6" style={{ borderTop: '1px solid var(--border)' }}>
+            {submitted ? (
+              <div className="success-feedback animate-fade-in" style={{ textAlign: 'center', padding: '16px' }}>
+                <span className="text-success" style={{ fontWeight: '600', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                  <CheckCircle size={20} />
+                  Vielen Dank für Ihre Bewertung! Ihr Feedback wurde erfolgreich gesendet.
+                </span>
+              </div>
+            ) : (
+              <form onSubmit={handleRatingSubmit}>
+                <h4 className="mb-4 text-sm font-semibold" style={{ color: '#fff' }}>Qualität dieser KI-Antwort bewerten:</h4>
+                
+                {error && <div className="error-message mb-4">{error}</div>}
+
+                <div className="rating-buttons-container mb-4">
+                  {[
+                    { id: 'sehr_gut', label: 'Sehr gut 🌟', color: '#10b981' },
+                    { id: 'gut', label: 'Gut 👍', color: '#3b82f6' },
+                    { id: 'schlecht', label: 'Schlecht 👎', color: '#f59e0b' },
+                    { id: 'sehr_schlecht', label: 'Sehr schlecht ❌', color: '#ef4444' }
+                  ].map((r) => (
+                    <button
+                      key={r.id}
+                      type="button"
+                      onClick={() => setRating(r.id)}
+                      className={`rating-btn ${rating === r.id ? 'active' : ''}`}
+                      style={{
+                        '--btn-color': r.color,
+                        borderColor: rating === r.id ? r.color : 'var(--border)',
+                        background: rating === r.id ? `${r.color}20` : 'transparent',
+                        color: rating === r.id ? r.color : 'var(--text-muted)'
+                      }}
+                    >
+                      {r.label}
+                    </button>
+                  ))}
+                </div>
+
+                {rating && (
+                  <div className="rating-comment-form animate-fade-in">
+                    <textarea
+                      placeholder="Möchten Sie weiteres Feedback oder Korrekturwünsche hinzufügen? (optional)..."
+                      className="login-input mb-3"
+                      value={comment}
+                      onChange={e => setComment(e.target.value)}
+                      style={{ minHeight: '80px', paddingTop: '10px' }}
+                    />
+                    <button type="submit" className="login-button" disabled={loading} style={{ maxWidth: '240px' }}>
+                      {loading ? 'Wird gesendet...' : 'Bewertung absenden'}
+                    </button>
+                  </div>
+                )}
+              </form>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function App() {
   const [currentUser, setCurrentUser] = useState(() => {
     const saved = localStorage.getItem('currentUser');
@@ -199,6 +392,7 @@ function App() {
   
   const [logs, setLogs] = useState([]);
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [selectedLog, setSelectedLog] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [errorDetails, setErrorDetails] = useState('');
@@ -207,6 +401,13 @@ function App() {
   const [showAllLogs, setShowAllLogs] = useState(false);
   const [filterCategory, setFilterCategory] = useState('all');
   const [savingsTimeframe, setSavingsTimeframe] = useState('all');
+
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    if (tab === 'logs' && filterCategory === 'gefiltert') {
+      setFilterCategory('all');
+    }
+  };
   
   const toggleRow = (id) => {
     setExpandedRows(prev => ({
@@ -314,7 +515,9 @@ function App() {
             timestamp: dateObj.getTime(),
             category: category,
             summary: row.Kundenanliegen || row.Zusammenfassung || 'Keine Details',
-            linkStatus: row['Link - versendet'] || ''
+            linkStatus: row['Link - versendet'] || '',
+            customerEmail: row.Letzte_Kundenmail || row['Letzte Kundenmail'] || row.Kundenmail || '',
+            aiResponse: row.KI_Antwort || row.KI_Antw || row['KI-Antwort'] || ''
           };
         });
         
@@ -373,8 +576,11 @@ function App() {
   const savedMinutes = (filteredCount * 3) + (processedCount * 8);
   const savedHours = Math.round(savedMinutes / 60);
 
-  // Filter logs for the table based on category
+  // Filter logs for the table based on category and active tab
   const filteredLogs = logs.filter(log => {
+    // In Live Logs tab, hide gefiltert (sonstiges)
+    if (activeTab === 'logs' && log.category === 'gefiltert') return false;
+    
     if (filterCategory === 'all') return true;
     return log.category === filterCategory;
   });
@@ -455,21 +661,21 @@ function App() {
         <nav style={{ flex: 1 }}>
           <div 
             className={`nav-item ${activeTab === 'dashboard' ? 'active' : ''}`}
-            onClick={() => setActiveTab('dashboard')}
+            onClick={() => handleTabChange('dashboard')}
           >
             <PieChartIcon size={20} />
             <span>Dashboard</span>
           </div>
           <div 
             className={`nav-item ${activeTab === 'logs' ? 'active' : ''}`}
-            onClick={() => setActiveTab('logs')}
+            onClick={() => handleTabChange('logs')}
           >
             <Activity size={20} />
             <span>Live Logs</span>
           </div>
           <div 
             className={`nav-item ${activeTab === 'feedback' ? 'active' : ''}`}
-            onClick={() => setActiveTab('feedback')}
+            onClick={() => handleTabChange('feedback')}
           >
             <MessageSquare size={20} />
             <span>Feedback</span>
@@ -486,21 +692,21 @@ function App() {
       <nav className="bottom-nav">
         <div 
           className={`bottom-nav-item ${activeTab === 'dashboard' ? 'active' : ''}`}
-          onClick={() => setActiveTab('dashboard')}
+          onClick={() => handleTabChange('dashboard')}
         >
           <PieChartIcon size={24} />
           <span>Dashboard</span>
         </div>
         <div 
           className={`bottom-nav-item ${activeTab === 'logs' ? 'active' : ''}`}
-          onClick={() => setActiveTab('logs')}
+          onClick={() => handleTabChange('logs')}
         >
           <Activity size={24} />
           <span>Logs</span>
         </div>
         <div 
           className={`bottom-nav-item ${activeTab === 'feedback' ? 'active' : ''}`}
-          onClick={() => setActiveTab('feedback')}
+          onClick={() => handleTabChange('feedback')}
         >
           <MessageSquare size={24} />
           <span>Feedback</span>
@@ -764,7 +970,7 @@ function App() {
               { id: 'termin', label: 'Termin', icon: <Calendar size={14} /> },
               { id: 'ersatzteile', label: 'Ersatzteile', icon: <Wrench size={14} /> },
               { id: 'technische_fragen', label: 'Technische Fragen', icon: <HelpCircle size={14} /> },
-              { id: 'gefiltert', label: 'Gefiltert', icon: <CheckCircle size={14} /> }
+              ...(activeTab !== 'logs' ? [{ id: 'gefiltert', label: 'Gefiltert', icon: <CheckCircle size={14} /> }] : [])
             ].map((cat) => (
               <button
                 key={cat.id}
@@ -848,8 +1054,8 @@ function App() {
                             transition: 'color 0.2s',
                             padding: '16px'
                           }}
-                          onClick={() => toggleRow(log.id || idx)}
-                          title="Klicken, um den ganzen Text anzuzeigen"
+                          onClick={() => setSelectedLog(log)}
+                          title="Klicken, um E-Mail-Details und KI-Antwort anzuzeigen"
                         >
                           {expandedRows[log.id || idx] ? (
                             <div style={{ whiteSpace: 'normal', wordBreak: 'break-word', color: '#fff', fontSize: '0.95rem', lineHeight: '1.4' }}>
@@ -903,7 +1109,7 @@ function App() {
                 <div style={{textAlign: 'center', padding: '32px'}}>Keine Daten gefunden.</div>
               ) : (
                 (showAllLogs ? filteredLogs : filteredLogs.slice(0, 50)).map((log, idx) => (
-                  <div key={log.id || idx} className="mobile-card glass-panel" onClick={() => toggleRow(log.id || idx)} style={{ marginBottom: '12px', padding: '16px' }}>
+                  <div key={log.id || idx} className="mobile-card glass-panel" onClick={() => setSelectedLog(log)} style={{ marginBottom: '12px', padding: '16px', cursor: 'pointer' }}>
                     <div className="flex justify-between items-start mb-3">
                       <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{log.fullTimestamp}</div>
                       <div>
@@ -978,6 +1184,14 @@ function App() {
           )}
         </div>
       </main>
+
+      {selectedLog && (
+        <LogDetailModal 
+          log={selectedLog} 
+          onClose={() => setSelectedLog(null)} 
+          currentUser={currentUser} 
+        />
+      )}
     </div>
   );
 }
