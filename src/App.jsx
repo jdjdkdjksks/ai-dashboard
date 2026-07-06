@@ -219,7 +219,8 @@ function LogDetailModal({ log, onClose, currentUser }) {
         body: JSON.stringify({
           kunde: currentUser.name,
           system: 'AutoFlow AI Dashboard - Log Rating',
-          nachricht: `Bewertung für E-Mail-Log #${log.id} (${log.fullTimestamp})\nDashboard: ${currentUser.name}\n\nBewertung: ${ratingLabels[rating]}\nKommentar: ${comment || 'Kein Kommentar'}`,
+          nachricht: `Bewertung für E-Mail-Log #${log.id} (${log.fullTimestamp})\n\nBewertung: ${ratingLabels[rating]}\nKommentar: ${comment || 'Kein Kommentar'}`,
+          dashboard: currentUser.name,
           bewertung: ratingLabels[rating],
           kommentar: comment,
           log_id: log.id,
@@ -397,6 +398,18 @@ function App() {
   const [expandedRows, setExpandedRows] = useState({});
   const [showAllLogs, setShowAllLogs] = useState(false);
   const [filterCategory, setFilterCategory] = useState('all');
+  const [checkedLogs, setCheckedLogs] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('checkedLogs') || '{}'); } catch { return {}; }
+  });
+
+  const toggleChecked = (id, e) => {
+    e.stopPropagation();
+    setCheckedLogs(prev => {
+      const next = { ...prev, [id]: !prev[id] };
+      localStorage.setItem('checkedLogs', JSON.stringify(next));
+      return next;
+    });
+  };
   const [savingsTimeframe, setSavingsTimeframe] = useState('all');
 
   const handleTabChange = (tab) => {
@@ -507,7 +520,7 @@ function App() {
           }
 
           return {
-            id: row.row_number || i,
+            id: row.row_number ? row.row_number - 1 : i + 1,
             fullTimestamp: fullTimestamp,
             timestamp: dateObj.getTime(),
             category: category,
@@ -1000,10 +1013,12 @@ function App() {
             <table className="desktop-table">
               <thead>
                 <tr>
+                  <th>Log</th>
                   <th>Zeitpunkt</th>
                   <th>Kategorie</th>
                   <th>Kundenanliegen</th>
                   <th>Eingeleitete Aktion</th>
+                  {activeTab === 'logs' && <th style={{ width: '48px' }}></th>}
                 </tr>
               </thead>
               <tbody>
@@ -1011,8 +1026,12 @@ function App() {
                   <tr><td colSpan="4" style={{textAlign: 'center', padding: '32px'}}>Keine Daten gefunden.</td></tr>
                 ) : (
                   (showAllLogs ? filteredLogs : filteredLogs.slice(0, 50)).map((log, idx) => {
+                    const isChecked = !!checkedLogs[log.id ?? idx];
                     return (
-                      <tr key={log.id || idx}>
+                      <tr key={log.id || idx} style={{ opacity: isChecked ? 0.45 : 1, transition: 'opacity 0.3s' }}>
+                        <td style={{ minWidth: '48px', color: 'var(--text-muted)', fontSize: '0.8rem', fontWeight: 600 }}>
+                          #{log.id ?? idx + 1}
+                        </td>
                         <td style={{ minWidth: '150px' }}>
                           <div style={{fontWeight: 500, fontSize: '0.9rem'}}>{log.fullTimestamp}</div>
                         </td>
@@ -1093,6 +1112,27 @@ function App() {
                             </span>
                           )}
                         </td>
+                        {activeTab === 'logs' && (
+                          <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
+                            <button
+                              onClick={(e) => toggleChecked(log.id ?? idx, e)}
+                              title={isChecked ? 'Als unerledigt markieren' : 'Als erledigt markieren'}
+                              style={{
+                                background: isChecked ? 'rgba(16,185,129,0.15)' : 'rgba(255,255,255,0.05)',
+                                border: `1px solid ${isChecked ? 'rgba(16,185,129,0.5)' : 'rgba(255,255,255,0.15)'}`,
+                                borderRadius: '50%',
+                                width: '30px', height: '30px',
+                                cursor: 'pointer',
+                                color: isChecked ? '#10b981' : 'var(--text-muted)',
+                                fontSize: '1rem',
+                                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                                transition: 'all 0.2s'
+                              }}
+                            >
+                              {isChecked ? '✓' : '○'}
+                            </button>
+                          </td>
+                        )}
                       </tr>
                     );
                   })
@@ -1106,9 +1146,32 @@ function App() {
                 <div style={{textAlign: 'center', padding: '32px'}}>Keine Daten gefunden.</div>
               ) : (
                 (showAllLogs ? filteredLogs : filteredLogs.slice(0, 50)).map((log, idx) => (
-                  <div key={log.id || idx} className="mobile-card glass-panel" onClick={() => setSelectedLog(log)} style={{ marginBottom: '12px', padding: '16px', cursor: 'pointer' }}>
+                  <div key={log.id || idx} className="mobile-card glass-panel" onClick={() => setSelectedLog(log)} style={{ marginBottom: '12px', padding: '16px', cursor: 'pointer', opacity: checkedLogs[log.id ?? idx] ? 0.45 : 1, transition: 'opacity 0.3s' }}>
                     <div className="flex justify-between items-start mb-3">
-                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{log.fullTimestamp}</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        {activeTab === 'logs' && (
+                          <button
+                            onClick={(e) => toggleChecked(log.id ?? idx, e)}
+                            title={checkedLogs[log.id ?? idx] ? 'Als unerledigt markieren' : 'Als erledigt markieren'}
+                            style={{
+                              background: checkedLogs[log.id ?? idx] ? 'rgba(16,185,129,0.15)' : 'rgba(255,255,255,0.05)',
+                              border: `1px solid ${checkedLogs[log.id ?? idx] ? 'rgba(16,185,129,0.5)' : 'rgba(255,255,255,0.15)'}`,
+                              borderRadius: '50%',
+                              width: '24px', height: '24px',
+                              cursor: 'pointer',
+                              color: checkedLogs[log.id ?? idx] ? '#10b981' : 'var(--text-muted)',
+                              fontSize: '0.8rem',
+                              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                              transition: 'all 0.2s',
+                              flexShrink: 0
+                            }}
+                          >
+                            {checkedLogs[log.id ?? idx] ? '✓' : '○'}
+                          </button>
+                        )}
+                        <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 600 }}>#{log.id ?? idx + 1}</span>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{log.fullTimestamp}</span>
+                      </div>
                       <div>
                         {log.category === 'fahrzeug_interesse' ? (
                           <span className="badge badge-success">Fahrzeug-Interesse</span>
