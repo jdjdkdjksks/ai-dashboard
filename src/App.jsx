@@ -219,14 +219,11 @@ function LogDetailModal({ log, onClose, currentUser }) {
         body: JSON.stringify({
           kunde: currentUser.name,
           system: 'AutoFlow AI Dashboard - Log Rating',
-          nachricht: `Bewertung für E-Mail-Log #${log.id} (${log.fullTimestamp})\n\nBewertung: ${ratingLabels[rating]}\nKommentar: ${comment || 'Kein Kommentar'}\n\nKundenanliegen: ${log.summary}\n\nLetzte Kundenmail:\n${log.customerEmail || 'Keine Daten'}\n\nKI-Antwort:\n${log.aiResponse || 'Keine Daten'}`,
+          nachricht: `Bewertung für E-Mail-Log #${log.id} (${log.fullTimestamp})\nDashboard: ${currentUser.name}\n\nBewertung: ${ratingLabels[rating]}\nKommentar: ${comment || 'Kein Kommentar'}`,
           bewertung: ratingLabels[rating],
           kommentar: comment,
           log_id: log.id,
           zeitpunkt_log: log.fullTimestamp,
-          kundenanliegen: log.summary,
-          letzte_kundenmail: log.customerEmail,
-          ki_antwort: log.aiResponse,
           zeitpunkt_formatiert: new Date().toLocaleString('de-DE', { 
             day: '2-digit', month: '2-digit', year: 'numeric', 
             hour: '2-digit', minute: '2-digit' 
@@ -258,14 +255,14 @@ function LogDetailModal({ log, onClose, currentUser }) {
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal-content glass-panel animate-scale-in" onClick={e => e.stopPropagation()}>
         <div className="modal-header">
-          <div className="flex items-center gap-3">
-            <span className="badge" style={{ backgroundColor: 'rgba(255,255,255,0.05)', color: '#fff', fontSize: '0.8rem', padding: '4px 8px', borderRadius: '4px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', rowGap: '6px' }}>
+            <span className="badge" style={{ backgroundColor: 'rgba(255,255,255,0.05)', color: '#fff', fontSize: '0.8rem', padding: '4px 8px', borderRadius: '4px', whiteSpace: 'nowrap' }}>
               #{log.id}
             </span>
-            <span className="badge" style={{ border: `1px solid ${badge.color}`, background: `${badge.color}15`, color: badge.color, display: 'inline-flex', alignItems: 'center', padding: '2px 8px', borderRadius: '4px', fontSize: '0.8rem' }}>
+            <span className="badge" style={{ border: `1px solid ${badge.color}`, background: `${badge.color}15`, color: badge.color, display: 'inline-flex', alignItems: 'center', padding: '2px 10px', borderRadius: '4px', fontSize: '0.8rem', whiteSpace: 'nowrap' }}>
               {badge.label}
             </span>
-            <span className="text-muted text-sm">{log.fullTimestamp}</span>
+            <span className="text-muted text-sm" style={{ whiteSpace: 'nowrap' }}>&nbsp;{log.fullTimestamp}</span>
           </div>
           <button className="modal-close-btn" onClick={onClose}>&times;</button>
         </div>
@@ -1019,7 +1016,7 @@ function App() {
                         <td style={{ minWidth: '150px' }}>
                           <div style={{fontWeight: 500, fontSize: '0.9rem'}}>{log.fullTimestamp}</div>
                         </td>
-                        <td>
+                        <td style={{ cursor: 'pointer' }} onClick={() => setSelectedLog(log)} title="Details anzeigen">
                           {log.category === 'fahrzeug_interesse' ? (
                             <span className="badge badge-success" style={{ border: '1px solid rgba(16, 185, 129, 0.2)', background: 'rgba(16, 185, 129, 0.1)', color: 'var(--success)' }}>
                               <Car size={12} style={{marginRight: '4px'}}/>
@@ -1067,7 +1064,7 @@ function App() {
                             </div>
                           )}
                         </td>
-                        <td>
+                        <td style={{ cursor: 'pointer' }} onClick={() => setSelectedLog(log)} title="Details anzeigen">
                           {log.category === 'fahrzeug_interesse' ? (
                             <span className="badge badge-success" style={{ border: '1px solid rgba(16, 185, 129, 0.2)', background: 'rgba(16, 185, 129, 0.1)', color: 'var(--success)' }}>
                               Rückruf initiiert
