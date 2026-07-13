@@ -446,6 +446,7 @@ function App() {
             type: 'notschalter',
             kunde: currentUser.name,
             status: nextState ? 'pausiert' : 'aktiv',
+            nachricht: `⚠️ Workflow-Status geändert für ${currentUser.name}: ${nextState ? 'AUSGESCHALTET (Pausiert) 🔴' : 'EINGESCHALTET (Aktiv) 🟢'}`,
             timestamp: new Date().toISOString()
           })
         });
@@ -575,7 +576,7 @@ function App() {
             category: category,
             summary: row.Kundenanliegen || row.Zusammenfassung || 'Keine Details',
             linkStatus: row['Link - versendet'] || '',
-            customerEmail: row.Letzte_Kundenmail || row['Letzte Kundenmail'] || row.Kundenmail || '',
+            customerEmail: row.Letzte_Kundenmail || row['Letzte Kundenmail'] || row.Kundenmail || row['Letzte E-Mail'] || row.Email || row.Mail || row.Letzte_Mail || row['Letzte Mail'] || row.Kunden_Mail || row['Kunden Mail'] || '',
             aiResponse: row.KI_Antwort || row.KI_Antw || row['KI-Antwort'] || ''
           };
         });
@@ -826,55 +827,56 @@ function App() {
 
         {activeTab === 'dashboard' && (
           <div className="animate-fade-in" style={{ animationDelay: '0.1s' }}>
-            {/* Notschalter Card */}
+            {/* Notschalter Card (Kompakt & Elegant) */}
             <div className="glass-panel" style={{ 
-              marginBottom: '32px', 
-              padding: '20px 24px', 
+              marginBottom: '24px', 
+              padding: '12px 20px', 
               display: 'flex', 
               alignItems: 'center', 
               justifyContent: 'space-between',
-              border: `1px solid ${workflowPaused ? 'rgba(239, 68, 68, 0.3)' : 'rgba(16, 185, 129, 0.25)'}`,
-              background: workflowPaused ? 'rgba(239, 68, 68, 0.05)' : 'rgba(16, 185, 129, 0.02)',
-              boxShadow: workflowPaused ? '0 0 20px rgba(239, 68, 68, 0.08)' : 'none',
+              border: `1px solid ${workflowPaused ? 'rgba(239, 68, 68, 0.25)' : 'rgba(16, 185, 129, 0.2)'}`,
+              background: workflowPaused ? 'rgba(239, 68, 68, 0.03)' : 'rgba(16, 185, 129, 0.01)',
+              boxShadow: workflowPaused ? '0 0 15px rgba(239, 68, 68, 0.05)' : 'none',
               flexWrap: 'wrap',
-              gap: '16px'
+              gap: '12px',
+              borderRadius: '12px'
             }}>
-              <div style={{ flex: '1', minWidth: '240px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span style={{ 
-                    width: '10px', height: '10px', borderRadius: '50%', 
-                    background: workflowPaused ? 'var(--danger)' : 'var(--success)',
-                    boxShadow: `0 0 10px ${workflowPaused ? 'var(--danger)' : 'var(--success)'}`,
-                    display: 'inline-block'
-                  }}></span>
-                  <h4 style={{ fontSize: '1.05rem', fontWeight: '600', color: '#fff', margin: 0 }}>
-                    System-Workflow: {workflowPaused ? 'PAUSIERT' : 'AKTIV'}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: '1', minWidth: '220px' }}>
+                <span style={{ 
+                  width: '8px', height: '8px', borderRadius: '50%', 
+                  background: workflowPaused ? 'var(--danger)' : 'var(--success)',
+                  boxShadow: `0 0 8px ${workflowPaused ? 'var(--danger)' : 'var(--success)'}`,
+                  display: 'inline-block',
+                  flexShrink: 0
+                }}></span>
+                <div>
+                  <h4 style={{ fontSize: '0.95rem', fontWeight: '600', color: '#fff', margin: 0 }}>
+                    Workflow: {workflowPaused ? 'PAUSIERT' : 'AKTIV'}
                   </h4>
+                  <p className="text-muted" style={{ fontSize: '0.78rem', marginTop: '2px', lineHeight: '1.3' }}>
+                    {workflowPaused 
+                      ? 'Antworten pausiert. Keine automatischen Mails.' 
+                      : 'Mails werden automatisch in Echtzeit beantwortet.'}
+                  </p>
                 </div>
-                <p className="text-muted" style={{ fontSize: '0.85rem', marginTop: '4px' }}>
-                  {workflowPaused 
-                    ? 'Der E-Mail-Beantwortungsworkflow ist pausiert. Es werden keine automatischen Antworten versendet.' 
-                    : 'Alle Systeme laufen normal. E-Mails werden automatisch in Echtzeit beantwortet.'}
-                </p>
               </div>
               <button 
                 onClick={handleToggleWorkflow}
                 disabled={pausingLoading}
                 style={{
-                  background: workflowPaused ? 'var(--success)' : 'var(--danger)',
-                  color: '#fff',
-                  border: 'none',
-                  padding: '10px 24px',
-                  borderRadius: '10px',
-                  fontSize: '0.9rem',
+                  background: workflowPaused ? 'var(--success)' : 'rgba(239, 68, 68, 0.1)',
+                  color: workflowPaused ? '#fff' : 'var(--danger)',
+                  border: `1px solid ${workflowPaused ? 'var(--success)' : 'rgba(239, 68, 68, 0.2)'}`,
+                  padding: '6px 14px',
+                  borderRadius: '6px',
+                  fontSize: '0.8rem',
                   fontWeight: '600',
                   cursor: 'pointer',
                   transition: 'all 0.2s',
-                  boxShadow: `0 4px 12px ${workflowPaused ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)'}`,
                   opacity: pausingLoading ? 0.7 : 1
                 }}
               >
-                {pausingLoading ? 'Schalte...' : (workflowPaused ? 'Workflow Fortsetzen' : 'Workflow Pausieren')}
+                {pausingLoading ? 'Schalte...' : (workflowPaused ? 'Aktivieren' : 'Pausieren')}
               </button>
             </div>
 
@@ -947,8 +949,8 @@ function App() {
                 <h3 className="mb-4">E-Mail Kategorien</h3>
                 <div style={{ height: '300px' }}>
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={pathDistribution} margin={{top: 10, right: 10, left: -20, bottom: 0}}>
-                      <XAxis dataKey="name" stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} />
+                    <BarChart data={pathDistribution} margin={{top: 10, right: 10, left: -20, bottom: 5}}>
+                      <XAxis dataKey="name" stroke="var(--text-muted)" fontSize={10} tickLine={false} axisLine={false} height={45} dy={5} />
                       <YAxis stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} allowDecimals={false} />
                       <Tooltip 
                         contentStyle={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '8px', color: '#fff' }}
@@ -969,16 +971,16 @@ function App() {
 
               <div className="glass-panel chart-box-narrow">
                 <h3 className="mb-4">E-Mail-Verteilung</h3>
-                <div style={{ display: 'flex', flexDirection: 'column', height: '300px', justifyContent: 'center' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '200px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', height: 'auto', minHeight: '300px', justifyContent: 'center' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '170px' }}>
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
                         <Pie
                           data={mailChartData}
                           cx="50%"
                           cy="50%"
-                          innerRadius={55}
-                          outerRadius={75}
+                          innerRadius={50}
+                          outerRadius={70}
                           paddingAngle={5}
                           dataKey="value"
                         >
@@ -995,11 +997,11 @@ function App() {
                   </div>
                   
                   {/* Custom Legend */}
-                  <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', flexWrap: 'wrap', marginTop: '16px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'center', gap: '8px 12px', flexWrap: 'wrap', marginTop: '12px' }}>
                     {mailChartData.map((entry, idx) => (
-                      <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.85rem' }}>
+                      <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.78rem' }}>
                         <span style={{ 
-                          width: '10px', height: '10px', borderRadius: '50%', 
+                          width: '8px', height: '8px', borderRadius: '50%', 
                           backgroundColor: MAIL_COLORS[entry.name] || 'var(--secondary)',
                           display: 'inline-block'
                         }}></span>
