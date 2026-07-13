@@ -219,7 +219,7 @@ function LogDetailModal({ log, onClose, currentUser }) {
         body: JSON.stringify({
           kunde: currentUser.name,
           system: 'AutoFlow AI Dashboard - Log Rating',
-          nachricht: `Bewertung für E-Mail-Log #${log.id} (${log.fullTimestamp})\n\nBewertung: ${ratingLabels[rating]}\nKommentar: ${comment || 'Kein Kommentar'}`,
+          nachricht: `Bewertung für E-Mail-Log #${log.id} (${log.fullTimestamp})\nKategorie: ${getCategoryBadge(log.category).label}\n\nBewertung: ${ratingLabels[rating]}\nKommentar: ${comment || 'Kein Kommentar'}`,
           dashboard: currentUser.name,
           bewertung: ratingLabels[rating],
           kommentar: comment,
@@ -306,67 +306,71 @@ function LogDetailModal({ log, onClose, currentUser }) {
                     {log.aiResponse}
                   </pre>
                 ) : (
-                  <p className="text-muted italic">Keine KI-Antwort vorhanden. (Fügen Sie die Spalte 'KI_Antwort' in Sheets hinzu.)</p>
+                  <p className="text-muted italic">
+                    {log.category === 'gefiltert' ? 'Automatisch gefiltert – keine KI-Antwort erforderlich.' : 'Keine KI-Antwort vorhanden. (Fügen Sie die Spalte \'KI_Antwort\' in Sheets hinzu.)'}
+                  </p>
                 )}
               </div>
             </div>
           </div>
 
-          <div className="feedback-section mt-8 pt-6" style={{ borderTop: '1px solid var(--border)' }}>
-            {submitted ? (
-              <div className="success-feedback animate-fade-in" style={{ textAlign: 'center', padding: '16px' }}>
-                <span className="text-success" style={{ fontWeight: '600', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                  <CheckCircle size={20} />
-                  Vielen Dank für Ihre Bewertung! Ihr Feedback wurde erfolgreich gesendet.
-                </span>
-              </div>
-            ) : (
-              <form onSubmit={handleRatingSubmit}>
-                <h4 className="mb-4 text-sm font-semibold" style={{ color: '#fff' }}>Qualität dieser KI-Antwort bewerten:</h4>
-                
-                {error && <div className="error-message mb-4">{error}</div>}
-
-                <div className="rating-buttons-container mb-4">
-                  {[
-                    { id: 'sehr_gut', label: 'Sehr gut 🌟', color: '#10b981' },
-                    { id: 'gut', label: 'Gut 👍', color: '#3b82f6' },
-                    { id: 'schlecht', label: 'Schlecht 👎', color: '#f59e0b' },
-                    { id: 'sehr_schlecht', label: 'Sehr schlecht ❌', color: '#ef4444' }
-                  ].map((r) => (
-                    <button
-                      key={r.id}
-                      type="button"
-                      onClick={() => setRating(r.id)}
-                      className={`rating-btn ${rating === r.id ? 'active' : ''}`}
-                      style={{
-                        '--btn-color': r.color,
-                        borderColor: rating === r.id ? r.color : 'var(--border)',
-                        background: rating === r.id ? `${r.color}20` : 'transparent',
-                        color: rating === r.id ? r.color : 'var(--text-muted)'
-                      }}
-                    >
-                      {r.label}
-                    </button>
-                  ))}
+          {log.category !== 'gefiltert' && (
+            <div className="feedback-section mt-8 pt-6" style={{ borderTop: '1px solid var(--border)' }}>
+              {submitted ? (
+                <div className="success-feedback animate-fade-in" style={{ textAlign: 'center', padding: '16px' }}>
+                  <span className="text-success" style={{ fontWeight: '600', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                    <CheckCircle size={20} />
+                    Vielen Dank für Ihre Bewertung! Ihr Feedback wurde erfolgreich gesendet.
+                  </span>
                 </div>
+              ) : (
+                <form onSubmit={handleRatingSubmit}>
+                  <h4 className="mb-4 text-sm font-semibold" style={{ color: '#fff' }}>Qualität dieser KI-Antwort bewerten:</h4>
+                  
+                  {error && <div className="error-message mb-4">{error}</div>}
 
-                {rating && (
-                  <div className="rating-comment-form animate-fade-in">
-                    <textarea
-                      placeholder="Möchten Sie weiteres Feedback oder Korrekturwünsche hinzufügen? (optional)..."
-                      className="login-input mb-3"
-                      value={comment}
-                      onChange={e => setComment(e.target.value)}
-                      style={{ minHeight: '80px', paddingTop: '10px' }}
-                    />
-                    <button type="submit" className="login-button" disabled={loading} style={{ maxWidth: '240px' }}>
-                      {loading ? 'Wird gesendet...' : 'Bewertung absenden'}
-                    </button>
+                  <div className="rating-buttons-container mb-4">
+                    {[
+                      { id: 'sehr_gut', label: 'Sehr gut 🌟', color: '#10b981' },
+                      { id: 'gut', label: 'Gut 👍', color: '#3b82f6' },
+                      { id: 'schlecht', label: 'Schlecht 👎', color: '#f59e0b' },
+                      { id: 'sehr_schlecht', label: 'Sehr schlecht ❌', color: '#ef4444' }
+                    ].map((r) => (
+                      <button
+                        key={r.id}
+                        type="button"
+                        onClick={() => setRating(r.id)}
+                        className={`rating-btn ${rating === r.id ? 'active' : ''}`}
+                        style={{
+                          '--btn-color': r.color,
+                          borderColor: rating === r.id ? r.color : 'var(--border)',
+                          background: rating === r.id ? `${r.color}20` : 'transparent',
+                          color: rating === r.id ? r.color : 'var(--text-muted)'
+                        }}
+                      >
+                        {r.label}
+                      </button>
+                    ))}
                   </div>
-                )}
-              </form>
-            )}
-          </div>
+
+                  {rating && (
+                    <div className="rating-comment-form animate-fade-in">
+                      <textarea
+                        placeholder="Möchten Sie weiteres Feedback oder Korrekturwünsche hinzufügen? (optional)..."
+                        className="login-input mb-3"
+                        value={comment}
+                        onChange={e => setComment(e.target.value)}
+                        style={{ minHeight: '80px', paddingTop: '10px' }}
+                      />
+                      <button type="submit" className="login-button" disabled={loading} style={{ maxWidth: '240px' }}>
+                        {loading ? 'Wird gesendet...' : 'Bewertung absenden'}
+                      </button>
+                    </div>
+                  )}
+                </form>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -410,6 +414,51 @@ function App() {
       return next;
     });
   };
+
+  const handleMarkAllChecked = () => {
+    setCheckedLogs(prev => {
+      const next = { ...prev };
+      filteredLogs.forEach(log => {
+        next[log.id ?? log.idx] = true;
+      });
+      localStorage.setItem('checkedLogs', JSON.stringify(next));
+      return next;
+    });
+  };
+
+  const [workflowPaused, setWorkflowPaused] = useState(() => {
+    return localStorage.getItem(`workflow_paused_${currentUser?.name}`) === 'true';
+  });
+  const [pausingLoading, setPausingLoading] = useState(false);
+
+  const handleToggleWorkflow = async () => {
+    const nextState = !workflowPaused;
+    setPausingLoading(true);
+    try {
+      if (currentUser?.feedbackWebhook) {
+        await fetch(currentUser.feedbackWebhook, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: {
+            'Content-Type': 'text/plain',
+          },
+          body: JSON.stringify({
+            type: 'notschalter',
+            kunde: currentUser.name,
+            status: nextState ? 'pausiert' : 'aktiv',
+            timestamp: new Date().toISOString()
+          })
+        });
+      }
+      setWorkflowPaused(nextState);
+      localStorage.setItem(`workflow_paused_${currentUser.name}`, String(nextState));
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setPausingLoading(false);
+    }
+  };
+
   const [savingsTimeframe, setSavingsTimeframe] = useState('all');
 
   const handleTabChange = (tab) => {
@@ -596,11 +645,11 @@ function App() {
   });
 
   const pathDistribution = statsLogs.reduce((acc, log) => {
-    let categoryName = 'Automatisch gefiltert';
-    if (log.category === 'fahrzeug_interesse') categoryName = 'Fahrzeug-Interesse';
+    let categoryName = 'Gefiltert';
+    if (log.category === 'fahrzeug_interesse') categoryName = 'Fahrzeug-Int.';
     else if (log.category === 'termin') categoryName = 'Termin';
     else if (log.category === 'ersatzteile') categoryName = 'Ersatzteile';
-    else if (log.category === 'technische_fragen') categoryName = 'Technische Fragen';
+    else if (log.category === 'technische_fragen') categoryName = 'Tech. Fragen';
     
     const existing = acc.find(item => item.name === categoryName);
     if (existing) existing.value += 1;
@@ -612,15 +661,15 @@ function App() {
   // Split total incoming emails into specific categories
   const totalMailsDistribution = [
     { 
-      name: 'Automatisch gefiltert', 
+      name: 'Gefiltert', 
       value: filteredCount 
     },
     { 
-      name: 'Fahrzeug-Interesse', 
+      name: 'Fahrzeug-Int.', 
       value: statsLogs.filter(l => l.category === 'fahrzeug_interesse').length 
     },
     { 
-      name: 'Termin-Anfragen', 
+      name: 'Termin', 
       value: statsLogs.filter(l => l.category === 'termin').length 
     },
     { 
@@ -628,7 +677,7 @@ function App() {
       value: statsLogs.filter(l => l.category === 'ersatzteile').length 
     },
     { 
-      name: 'Technische Fragen', 
+      name: 'Tech. Fragen', 
       value: statsLogs.filter(l => l.category === 'technische_fragen').length 
     }
   ];
@@ -639,11 +688,11 @@ function App() {
     : [{ name: 'Keine E-Mails', value: 1 }];
 
   const MAIL_COLORS = {
-    'Automatisch gefiltert': '#4b5563', // Neutral gray-blue for filters
-    'Fahrzeug-Interesse': 'var(--success)', // Green
-    'Termin-Anfragen': 'var(--primary)', // Indigo
+    'Gefiltert': '#4b5563', // Neutral gray-blue for filters
+    'Fahrzeug-Int.': 'var(--success)', // Green
+    'Termin': 'var(--primary)', // Indigo
     'Ersatzteile': '#f59e0b', // Amber/Orange
-    'Technische Fragen': '#a855f7', // Purple
+    'Tech. Fragen': '#a855f7', // Purple
     'Keine E-Mails': '#374151'
   };
 
@@ -777,6 +826,58 @@ function App() {
 
         {activeTab === 'dashboard' && (
           <div className="animate-fade-in" style={{ animationDelay: '0.1s' }}>
+            {/* Notschalter Card */}
+            <div className="glass-panel" style={{ 
+              marginBottom: '32px', 
+              padding: '20px 24px', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'space-between',
+              border: `1px solid ${workflowPaused ? 'rgba(239, 68, 68, 0.3)' : 'rgba(16, 185, 129, 0.25)'}`,
+              background: workflowPaused ? 'rgba(239, 68, 68, 0.05)' : 'rgba(16, 185, 129, 0.02)',
+              boxShadow: workflowPaused ? '0 0 20px rgba(239, 68, 68, 0.08)' : 'none',
+              flexWrap: 'wrap',
+              gap: '16px'
+            }}>
+              <div style={{ flex: '1', minWidth: '240px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ 
+                    width: '10px', height: '10px', borderRadius: '50%', 
+                    background: workflowPaused ? 'var(--danger)' : 'var(--success)',
+                    boxShadow: `0 0 10px ${workflowPaused ? 'var(--danger)' : 'var(--success)'}`,
+                    display: 'inline-block'
+                  }}></span>
+                  <h4 style={{ fontSize: '1.05rem', fontWeight: '600', color: '#fff', margin: 0 }}>
+                    System-Workflow: {workflowPaused ? 'PAUSIERT' : 'AKTIV'}
+                  </h4>
+                </div>
+                <p className="text-muted" style={{ fontSize: '0.85rem', marginTop: '4px' }}>
+                  {workflowPaused 
+                    ? 'Der E-Mail-Beantwortungsworkflow ist pausiert. Es werden keine automatischen Antworten versendet.' 
+                    : 'Alle Systeme laufen normal. E-Mails werden automatisch in Echtzeit beantwortet.'}
+                </p>
+              </div>
+              <button 
+                onClick={handleToggleWorkflow}
+                disabled={pausingLoading}
+                style={{
+                  background: workflowPaused ? 'var(--success)' : 'var(--danger)',
+                  color: '#fff',
+                  border: 'none',
+                  padding: '10px 24px',
+                  borderRadius: '10px',
+                  fontSize: '0.9rem',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  boxShadow: `0 4px 12px ${workflowPaused ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)'}`,
+                  opacity: pausingLoading ? 0.7 : 1
+                }}
+              >
+                {pausingLoading ? 'Schalte...' : (workflowPaused ? 'Workflow Fortsetzen' : 'Workflow Pausieren')}
+              </button>
+            </div>
+
             {/* Timeframe Selector for Dashboard */}
             <div className="flex justify-between items-center timeframe-selector-wrapper">
               <h2 className="text-lg font-semibold desktop-only">Statistik-Zeitraum</h2>
@@ -961,15 +1062,26 @@ function App() {
         )}
 
         <div className="glass-panel animate-fade-in" style={{ animationDelay: '0.2s', marginTop: activeTab === 'logs' ? '0' : '32px', display: activeTab === 'dashboard' || activeTab === 'logs' ? 'block' : 'none' }}>
-          <div className="flex justify-between items-center mb-6">
+          <div className="flex justify-between items-center mb-6" style={{ flexWrap: 'wrap', gap: '12px' }}>
             <h3 style={{ fontSize: '1.25rem' }}>{activeTab === 'logs' ? 'Alle Logs' : 'Letzte E-Mail Eingänge'}</h3>
-            <button style={{
-              background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)', 
-              color: '#fff', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer',
-              transition: 'all 0.2s', fontSize: '0.9rem'
-            }} onClick={fetchLogs}>
-              Manuell Aktualisieren
-            </button>
+            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+              {activeTab === 'logs' && (
+                <button style={{
+                  background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.3)', 
+                  color: 'var(--success)', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer',
+                  transition: 'all 0.2s', fontSize: '0.9rem', fontWeight: '600'
+                }} onClick={handleMarkAllChecked}>
+                  Alle abhäkeln
+                </button>
+              )}
+              <button style={{
+                background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)', 
+                color: '#fff', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer',
+                transition: 'all 0.2s', fontSize: '0.9rem'
+              }} onClick={fetchLogs}>
+                Manuell Aktualisieren
+              </button>
+            </div>
           </div>
 
           {/* Category Filter Chips */}

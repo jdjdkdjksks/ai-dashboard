@@ -42,7 +42,9 @@ body {
 
 .sidebar {
   width: 280px;
-  min-height: 100vh;
+  height: 100vh;
+  position: sticky;
+  top: 0;
   border-right: 1px solid var(--border);
   padding: 32px 24px;
   display: flex;
@@ -682,3 +684,16 @@ td {
 .animate-scale-in {
   animation: scaleIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
+
+/* iPad and Tablet responsive styling */
+@media (max-width: 1200px) {
+  .dashboard-grid-full {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 16px;
+  }
+  .dashboard-charts-desktop {
+    grid-template-columns: 1fr !important;
+    gap: 24px;
+  }
+}
+
