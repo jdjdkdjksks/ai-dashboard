@@ -7,7 +7,7 @@ import {
   Activity, Mail, Wrench, 
   CheckCircle, Lock, User, Clock,
   MessageSquare, Send, PieChart as PieChartIcon,
-  Car, Calendar, HelpCircle
+  Car, Calendar, HelpCircle, Volume2, VolumeX
 } from 'lucide-react';
 import { CUSTOMERS } from './customers';
 import './index.css';
@@ -187,6 +187,60 @@ function LogDetailModal({ log, onClose, currentUser }) {
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState(null);
+  const [speakingField, setSpeakingField] = useState(null); // 'customer' | 'ai' | null
+
+  useEffect(() => {
+    return () => {
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, []);
+
+  const handleCloseModal = () => {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+    }
+    onClose();
+  };
+
+  const handleSpeak = (text, field) => {
+    if (!('speechSynthesis' in window)) {
+      alert('Sprachausgabe wird von diesem Browser leider nicht unterstützt.');
+      return;
+    }
+
+    if (speakingField === field) {
+      window.speechSynthesis.cancel();
+      setSpeakingField(null);
+      return;
+    }
+
+    window.speechSynthesis.cancel();
+    setSpeakingField(field);
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'de-DE';
+    utterance.rate = 0.95;
+
+    const voices = window.speechSynthesis.getVoices();
+    const germanVoice = voices.find(v => v.lang.startsWith('de') && (v.name.includes('Natural') || v.name.includes('Google') || v.name.includes('Anna') || v.name.includes('Markus') || v.name.includes('Petra') || v.name.includes('Vocalizer') || v.name.includes('Enhanced'))) 
+      || voices.find(v => v.lang.startsWith('de'));
+    
+    if (germanVoice) {
+      utterance.voice = germanVoice;
+    }
+
+    utterance.onend = () => {
+      setSpeakingField(null);
+    };
+
+    utterance.onerror = () => {
+      setSpeakingField(null);
+    };
+
+    window.speechSynthesis.speak(utterance);
+  };
 
   const handleRatingSubmit = async (e) => {
     e.preventDefault();
@@ -252,7 +306,7 @@ function LogDetailModal({ log, onClose, currentUser }) {
   const badge = getCategoryBadge(log.category);
 
   return (
-    <div className="modal-backdrop" onClick={onClose}>
+    <div className="modal-backdrop" onClick={handleCloseModal}>
       <div className="modal-content glass-panel animate-scale-in" onClick={e => e.stopPropagation()}>
         <div className="modal-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', rowGap: '6px' }}>
@@ -264,7 +318,7 @@ function LogDetailModal({ log, onClose, currentUser }) {
             </span>
             <span className="text-muted text-sm" style={{ whiteSpace: 'nowrap' }}>&nbsp;{log.fullTimestamp}</span>
           </div>
-          <button className="modal-close-btn" onClick={onClose}>&times;</button>
+          <button className="modal-close-btn" onClick={handleCloseModal}>&times;</button>
         </div>
 
         <div className="modal-body">
@@ -277,9 +331,29 @@ function LogDetailModal({ log, onClose, currentUser }) {
             <div className="email-box">
               <h4 className="text-muted mb-2 text-xs uppercase tracking-wider flex justify-between items-center" style={{ width: '100%' }}>
                 <span>Letzte E-Mail vom Kunden</span>
-                {log.customerEmail && (
-                  <button type="button" className="copy-btn" onClick={() => navigator.clipboard.writeText(log.customerEmail)}>Kopieren</button>
-                )}
+                <div style={{ display: 'flex', gap: '6px' }}>
+                  {log.customerEmail && (
+                    <button 
+                      type="button" 
+                      className="copy-btn" 
+                      onClick={() => handleSpeak(log.customerEmail, 'customer')}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        borderColor: speakingField === 'customer' ? 'var(--primary)' : 'var(--border)',
+                        background: speakingField === 'customer' ? 'rgba(37, 99, 235, 0.25)' : 'rgba(255, 255, 255, 0.05)',
+                        color: speakingField === 'customer' ? '#60a5fa' : 'var(--text-muted)'
+                      }}
+                    >
+                      {speakingField === 'customer' ? <VolumeX size={13} /> : <Volume2 size={13} />}
+                      {speakingField === 'customer' ? 'Stopp' : 'Vorlesen'}
+                    </button>
+                  )}
+                  {log.customerEmail && (
+                    <button type="button" className="copy-btn" onClick={() => navigator.clipboard.writeText(log.customerEmail)}>Kopieren</button>
+                  )}
+                </div>
               </h4>
               <div className="email-content-scroll scrollbar">
                 {log.customerEmail ? (
@@ -295,9 +369,29 @@ function LogDetailModal({ log, onClose, currentUser }) {
             <div className="email-box highlighted">
               <h4 className="text-muted mb-2 text-xs uppercase tracking-wider flex justify-between items-center" style={{ width: '100%' }}>
                 <span>KI-Antwort</span>
-                {log.aiResponse && (
-                  <button type="button" className="copy-btn" onClick={() => navigator.clipboard.writeText(log.aiResponse)}>Kopieren</button>
-                )}
+                <div style={{ display: 'flex', gap: '6px' }}>
+                  {log.aiResponse && (
+                    <button 
+                      type="button" 
+                      className="copy-btn" 
+                      onClick={() => handleSpeak(log.aiResponse, 'ai')}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        borderColor: speakingField === 'ai' ? 'var(--primary)' : 'var(--border)',
+                        background: speakingField === 'ai' ? 'rgba(37, 99, 235, 0.25)' : 'rgba(255, 255, 255, 0.05)',
+                        color: speakingField === 'ai' ? '#60a5fa' : 'var(--text-muted)'
+                      }}
+                    >
+                      {speakingField === 'ai' ? <VolumeX size={13} /> : <Volume2 size={13} />}
+                      {speakingField === 'ai' ? 'Stopp' : 'Vorlesen'}
+                    </button>
+                  )}
+                  {log.aiResponse && (
+                    <button type="button" className="copy-btn" onClick={() => navigator.clipboard.writeText(log.aiResponse)}>Kopieren</button>
+                  )}
+                </div>
               </h4>
               <div className="email-content-scroll scrollbar">
                 {log.aiResponse ? (
