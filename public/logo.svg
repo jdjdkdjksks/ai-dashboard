@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 140" fill="none">
+  <defs>
+    <!-- Dashboard-adapted gradient: deeper blue (#1D4ED8) to indigo-blue (#2563EB) -->
+    <linearGradient id="aGrad" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" stop-color="#60A5FA"/>
+      <stop offset="100%" stop-color="#1D4ED8"/>
+    </linearGradient>
+    <linearGradient id="aiGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#60A5FA"/>
+      <stop offset="100%" stop-color="#818CF8"/>
+    </linearGradient>
+  </defs>
+
+  <!-- A icon: two thick rounded legs + crossbar -->
+  <!-- Left leg -->
+  <path d="M30,120 L68,18" stroke="url(#aGrad)" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Right leg -->
+  <path d="M106,120 L68,18" stroke="url(#aGrad)" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Crossbar -->
+  <path d="M44,80 L92,80" stroke="url(#aGrad)" stroke-width="14" stroke-linecap="round"/>
+  <!-- 4-pointed star spark -->
+  <path d="M68,52 L70,58 L76,60 L70,62 L68,68 L66,62 L60,60 L66,58 Z" fill="white" opacity="0.90"/>
+
+  <!-- Wordmark -->
+  <text x="130" y="86"
+        font-family="'Outfit', 'Inter', 'Helvetica Neue', Arial, sans-serif"
+        font-weight="700"
+        font-size="52"
+        fill="white"
+        letter-spacing="-1">AutoFlow</text>
+  <text x="409" y="86"
+        font-family="'Outfit', 'Inter', 'Helvetica Neue', Arial, sans-serif"
+        font-weight="800"
+        font-size="52"
+        fill="url(#aiGrad)"
+        letter-spacing="-1">AI</text>
+</svg>

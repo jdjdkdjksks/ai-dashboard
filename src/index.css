@@ -444,9 +444,28 @@ td {
 .logo-img {
   height: 36px;
   width: auto;
-  background: white;
-  padding: 6px;
-  border-radius: 12px;
+  background: transparent;
+  padding: 0;
+  border-radius: 0;
+  transition: opacity 0.2s ease;
+}
+
+/* SVG wordmark: taller so full text is visible */
+.logo-svg {
+  height: 32px;
+  width: auto;
+}
+
+/* Brand pill when showing the full SVG wordmark (no extra text) */
+.logo-brand {
+  gap: 0;
+  padding: 8px 18px;
+  transition: all 0.3s ease;
+}
+
+.logo-brand:hover {
+  background: rgba(37, 99, 235, 0.15);
+  border-color: rgba(37, 99, 235, 0.35);
 }
 
 /* User Badge */

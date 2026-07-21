@@ -31,9 +31,8 @@ function LoginForm({ onLogin }) {
   return (
     <div className="login-container">
       <div className="login-box glass-panel animate-fade-in">
-        <a href="https://autoflow-ai.de" className="brand" style={{ justifyContent: 'center', marginBottom: '24px', textDecoration: 'none' }}>
-          <img src="/logo.png" alt="AutoFlow AI" className="logo-img" />
-          AutoFlow AI
+        <a href="https://autoflow-ai.de" className="brand logo-brand" style={{ justifyContent: 'center', marginBottom: '24px', textDecoration: 'none' }}>
+          <img src="/logo.svg" alt="AutoFlow AI" className="logo-img logo-svg" />
         </a>
         <h2 style={{ marginBottom: '8px' }}>Willkommen zurück</h2>
         <p className="text-muted mb-8">Bitte loggen Sie sich ein, um auf Ihr Dashboard zuzugreifen.</p>
@@ -701,9 +700,8 @@ function App() {
     <div className="app-container">
       {/* Mobile Header */}
       <header className="mobile-header">
-        <div className="brand" style={{ marginBottom: 0, padding: '6px 16px' }}>
-          <img src="/logo.png" alt="AutoFlow AI" className="logo-img" style={{ height: '24px' }} />
-          <span style={{ fontSize: '1rem' }}>AutoFlow AI</span>
+        <div className="brand logo-brand" style={{ marginBottom: 0, padding: '6px 16px' }}>
+          <img src="/logo.svg" alt="AutoFlow AI" className="logo-img logo-svg" style={{ height: '28px' }} />
         </div>
         <div className="user-badge">
           <User size={16} />
@@ -713,9 +711,8 @@ function App() {
 
       {/* Sidebar (Desktop only via CSS) */}
       <aside className="sidebar">
-        <a href="https://autoflow-ai.de" className="brand" style={{ textDecoration: 'none' }}>
-          <img src="/logo.png" alt="AutoFlow AI" className="logo-img" />
-          AutoFlow AI
+        <a href="https://autoflow-ai.de" className="brand logo-brand" style={{ textDecoration: 'none' }}>
+          <img src="/logo.svg" alt="AutoFlow AI" className="logo-img logo-svg" />
         </a>
         
         <nav style={{ flex: 1 }}>
