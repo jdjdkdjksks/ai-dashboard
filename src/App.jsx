@@ -7,7 +7,8 @@ import {
   Activity, Mail, Wrench, 
   CheckCircle, Lock, User, Clock,
   MessageSquare, Send, PieChart as PieChartIcon,
-  Car, Calendar, HelpCircle, Volume2, VolumeX
+  Car, Calendar, HelpCircle, Volume2, VolumeX,
+  Play, Pause, FastForward, Rewind, X
 } from 'lucide-react';
 import { CUSTOMERS } from './customers';
 import './index.css';
@@ -187,9 +188,34 @@ function LogDetailModal({ log, onClose, currentUser }) {
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState(null);
-  const [speakingField, setSpeakingField] = useState(null); // 'customer' | 'ai' | null
+
+  // Audio Player Deck States
+  const [voices, setVoices] = useState([]);
+  const [selectedVoiceURI, setSelectedVoiceURI] = useState('');
+  const [speechRate, setSpeechRate] = useState(1.0);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [activeAudio, setActiveAudio] = useState(null); // { text, title, field }
+  const [charIndex, setCharIndex] = useState(0);
 
   useEffect(() => {
+    const loadVoices = () => {
+      if ('speechSynthesis' in window) {
+        const allVoices = window.speechSynthesis.getVoices();
+        const germanVoices = allVoices.filter(v => v.lang.startsWith('de'));
+        const available = germanVoices.length > 0 ? germanVoices : allVoices;
+        setVoices(available);
+        if (available.length > 0 && !selectedVoiceURI) {
+          const preferred = available.find(v => v.name.includes('Natural') || v.name.includes('Google') || v.name.includes('Anna') || v.name.includes('Markus') || v.name.includes('Petra') || v.name.includes('Enhanced')) || available[0];
+          setSelectedVoiceURI(preferred.voiceURI);
+        }
+      }
+    };
+
+    loadVoices();
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.onvoiceschanged = loadVoices;
+    }
+
     return () => {
       if ('speechSynthesis' in window) {
         window.speechSynthesis.cancel();
@@ -197,49 +223,102 @@ function LogDetailModal({ log, onClose, currentUser }) {
     };
   }, []);
 
-  const handleCloseModal = () => {
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-    }
-    onClose();
-  };
-
-  const handleSpeak = (text, field) => {
+  const startPlayback = (text, title, field, fromIndex = 0, customRate = speechRate, customVoiceURI = selectedVoiceURI) => {
     if (!('speechSynthesis' in window)) {
       alert('Sprachausgabe wird von diesem Browser leider nicht unterstützt.');
       return;
     }
 
-    if (speakingField === field) {
-      window.speechSynthesis.cancel();
-      setSpeakingField(null);
+    window.speechSynthesis.cancel();
+    setActiveAudio({ text, title, field });
+    setCharIndex(fromIndex);
+    setIsPlaying(true);
+
+    const textToSpeak = text.slice(fromIndex);
+    if (!textToSpeak.trim()) {
+      setIsPlaying(false);
       return;
     }
 
-    window.speechSynthesis.cancel();
-    setSpeakingField(field);
-
-    const utterance = new SpeechSynthesisUtterance(text);
+    const utterance = new SpeechSynthesisUtterance(textToSpeak);
     utterance.lang = 'de-DE';
-    utterance.rate = 0.95;
+    utterance.rate = customRate;
 
-    const voices = window.speechSynthesis.getVoices();
-    const germanVoice = voices.find(v => v.lang.startsWith('de') && (v.name.includes('Natural') || v.name.includes('Google') || v.name.includes('Anna') || v.name.includes('Markus') || v.name.includes('Petra') || v.name.includes('Vocalizer') || v.name.includes('Enhanced'))) 
-      || voices.find(v => v.lang.startsWith('de'));
-    
-    if (germanVoice) {
-      utterance.voice = germanVoice;
+    const currentVoice = voices.find(v => v.voiceURI === customVoiceURI);
+    if (currentVoice) {
+      utterance.voice = currentVoice;
     }
 
+    utterance.onboundary = (e) => {
+      if (e.charIndex !== undefined) {
+        setCharIndex(fromIndex + e.charIndex);
+      }
+    };
+
     utterance.onend = () => {
-      setSpeakingField(null);
+      setIsPlaying(false);
+      setCharIndex(text.length);
     };
 
     utterance.onerror = () => {
-      setSpeakingField(null);
+      setIsPlaying(false);
     };
 
     window.speechSynthesis.speak(utterance);
+  };
+
+  const togglePlayPause = () => {
+    if (!activeAudio) return;
+
+    if (isPlaying) {
+      window.speechSynthesis.cancel();
+      setIsPlaying(false);
+    } else {
+      const startIndex = charIndex >= activeAudio.text.length ? 0 : charIndex;
+      startPlayback(activeAudio.text, activeAudio.title, activeAudio.field, startIndex);
+    }
+  };
+
+  const handleSeek = (newCharIndex) => {
+    if (!activeAudio) return;
+    const bounded = Math.max(0, Math.min(newCharIndex, activeAudio.text.length));
+    setCharIndex(bounded);
+    startPlayback(activeAudio.text, activeAudio.title, activeAudio.field, bounded);
+  };
+
+  const handleSkip = (direction) => {
+    if (!activeAudio) return;
+    const step = 40;
+    const nextIndex = direction === 'forward' ? charIndex + step : charIndex - step;
+    handleSeek(nextIndex);
+  };
+
+  const handleRateChange = (newRate) => {
+    setSpeechRate(newRate);
+    if (activeAudio) {
+      startPlayback(activeAudio.text, activeAudio.title, activeAudio.field, charIndex, newRate);
+    }
+  };
+
+  const handleVoiceChange = (uri) => {
+    setSelectedVoiceURI(uri);
+    if (activeAudio) {
+      startPlayback(activeAudio.text, activeAudio.title, activeAudio.field, charIndex, speechRate, uri);
+    }
+  };
+
+  const closeAudioPlayer = () => {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+    }
+    setActiveAudio(null);
+    setIsPlaying(false);
+    setCharIndex(0);
+  };
+
+  const handleCloseModal = () => {
+    closeAudioPlayer();
+    onClose();
   };
 
   const handleRatingSubmit = async (e) => {
@@ -336,18 +415,18 @@ function LogDetailModal({ log, onClose, currentUser }) {
                     <button 
                       type="button" 
                       className="copy-btn" 
-                      onClick={() => handleSpeak(log.customerEmail, 'customer')}
+                      onClick={() => startPlayback(log.customerEmail, 'Letzte E-Mail vom Kunden', 'customer')}
                       style={{
                         display: 'inline-flex',
                         alignItems: 'center',
                         gap: '4px',
-                        borderColor: speakingField === 'customer' ? 'var(--primary)' : 'var(--border)',
-                        background: speakingField === 'customer' ? 'rgba(37, 99, 235, 0.25)' : 'rgba(255, 255, 255, 0.05)',
-                        color: speakingField === 'customer' ? '#60a5fa' : 'var(--text-muted)'
+                        borderColor: activeAudio?.field === 'customer' ? 'var(--primary)' : 'var(--border)',
+                        background: activeAudio?.field === 'customer' ? 'rgba(37, 99, 235, 0.25)' : 'rgba(255, 255, 255, 0.05)',
+                        color: activeAudio?.field === 'customer' ? '#60a5fa' : 'var(--text-muted)'
                       }}
                     >
-                      {speakingField === 'customer' ? <VolumeX size={13} /> : <Volume2 size={13} />}
-                      {speakingField === 'customer' ? 'Stopp' : 'Vorlesen'}
+                      <Volume2 size={13} />
+                      Vorlesen
                     </button>
                   )}
                   {log.customerEmail && (
@@ -374,18 +453,18 @@ function LogDetailModal({ log, onClose, currentUser }) {
                     <button 
                       type="button" 
                       className="copy-btn" 
-                      onClick={() => handleSpeak(log.aiResponse, 'ai')}
+                      onClick={() => startPlayback(log.aiResponse, 'KI-Antwort', 'ai')}
                       style={{
                         display: 'inline-flex',
                         alignItems: 'center',
                         gap: '4px',
-                        borderColor: speakingField === 'ai' ? 'var(--primary)' : 'var(--border)',
-                        background: speakingField === 'ai' ? 'rgba(37, 99, 235, 0.25)' : 'rgba(255, 255, 255, 0.05)',
-                        color: speakingField === 'ai' ? '#60a5fa' : 'var(--text-muted)'
+                        borderColor: activeAudio?.field === 'ai' ? 'var(--primary)' : 'var(--border)',
+                        background: activeAudio?.field === 'ai' ? 'rgba(37, 99, 235, 0.25)' : 'rgba(255, 255, 255, 0.05)',
+                        color: activeAudio?.field === 'ai' ? '#60a5fa' : 'var(--text-muted)'
                       }}
                     >
-                      {speakingField === 'ai' ? <VolumeX size={13} /> : <Volume2 size={13} />}
-                      {speakingField === 'ai' ? 'Stopp' : 'Vorlesen'}
+                      <Volume2 size={13} />
+                      Vorlesen
                     </button>
                   )}
                   {log.aiResponse && (
@@ -406,6 +485,163 @@ function LogDetailModal({ log, onClose, currentUser }) {
               </div>
             </div>
           </div>
+
+          {/* Audio Player Deck / Control Card */}
+          {activeAudio && (
+            <div className="audio-player-deck glass-panel animate-fade-in" style={{
+              marginTop: '20px',
+              padding: '16px 20px',
+              borderRadius: '14px',
+              border: '1px solid rgba(37, 99, 235, 0.35)',
+              background: 'linear-gradient(135deg, rgba(25, 28, 36, 0.98), rgba(12, 14, 18, 0.99))',
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5)',
+              position: 'relative'
+            }}>
+              {/* Top Row: Track Title & Close */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <div style={{
+                    width: '32px', height: '32px', borderRadius: '50%',
+                    background: 'rgba(37, 99, 235, 0.2)', color: '#60a5fa',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    border: '1px solid rgba(37, 99, 235, 0.3)'
+                  }}>
+                    <Volume2 size={16} />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '0.85rem', fontWeight: '600', color: '#fff' }}>
+                      {activeAudio.title}
+                    </div>
+                    <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                      {isPlaying ? 'Vorlesen aktiv...' : 'Pausiert'}
+                    </div>
+                  </div>
+                </div>
+                <button 
+                  onClick={closeAudioPlayer}
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.05)', border: '1px solid var(--border)',
+                    color: 'var(--text-muted)', borderRadius: '50%', width: '26px', height: '26px',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer'
+                  }}
+                  title="Audio-Player schließen"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+
+              {/* Progress Slider (Vorspulen / Fortschritt) */}
+              <div style={{ marginBottom: '14px' }}>
+                <input 
+                  type="range"
+                  min={0}
+                  max={activeAudio.text.length || 1}
+                  value={charIndex}
+                  onChange={(e) => handleSeek(Number(e.target.value))}
+                  style={{
+                    width: '100%',
+                    accentColor: 'var(--primary)',
+                    cursor: 'pointer',
+                    height: '4px'
+                  }}
+                />
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '4px' }}>
+                  <span>Fortschritt: {Math.round((charIndex / (activeAudio.text.length || 1)) * 100)}%</span>
+                  <span>{charIndex} / {activeAudio.text.length} Zeichen</span>
+                </div>
+              </div>
+
+              {/* Controls Row */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
+                {/* Voice Selector */}
+                {voices.length > 0 && (
+                  <select 
+                    value={selectedVoiceURI} 
+                    onChange={(e) => handleVoiceChange(e.target.value)}
+                    style={{
+                      background: 'rgba(255, 255, 255, 0.06)',
+                      border: '1px solid var(--border)',
+                      color: 'var(--text-main)',
+                      fontSize: '0.75rem',
+                      padding: '6px 10px',
+                      borderRadius: '8px',
+                      maxWidth: '170px',
+                      outline: 'none',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    {voices.map(v => (
+                      <option key={v.voiceURI} value={v.voiceURI} style={{ background: '#1e2128', color: '#fff' }}>
+                        🗣️ {v.name.replace(/Microsoft|Google|Apple/g, '').trim()}
+                      </option>
+                    ))}
+                  </select>
+                )}
+
+                {/* Playback Action Buttons */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <button 
+                    onClick={() => handleSkip('backward')} 
+                    style={{
+                      background: 'rgba(255, 255, 255, 0.06)', border: '1px solid var(--border)',
+                      color: '#fff', borderRadius: '50%', width: '34px', height: '34px',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer'
+                    }}
+                    title="Zurückspulen"
+                  >
+                    <Rewind size={15} />
+                  </button>
+
+                  <button 
+                    onClick={togglePlayPause}
+                    style={{
+                      background: 'var(--primary)', border: 'none',
+                      color: '#fff', borderRadius: '50%', width: '44px', height: '44px',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+                      boxShadow: '0 0 14px var(--primary-glow)'
+                    }}
+                    title={isPlaying ? 'Pausieren' : 'Abspielen'}
+                  >
+                    {isPlaying ? <Pause size={20} /> : <Play size={20} style={{ marginLeft: '2px' }} />}
+                  </button>
+
+                  <button 
+                    onClick={() => handleSkip('forward')}
+                    style={{
+                      background: 'rgba(255, 255, 255, 0.06)', border: '1px solid var(--border)',
+                      color: '#fff', borderRadius: '50%', width: '34px', height: '34px',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer'
+                    }}
+                    title="Vorspulen"
+                  >
+                    <FastForward size={15} />
+                  </button>
+                </div>
+
+                {/* Speed Tempo Pills */}
+                <div style={{ display: 'flex', gap: '4px' }}>
+                  {[0.75, 1.0, 1.25, 1.5].map(r => (
+                    <button
+                      key={r}
+                      onClick={() => handleRateChange(r)}
+                      style={{
+                        background: speechRate === r ? 'rgba(37, 99, 235, 0.3)' : 'rgba(255, 255, 255, 0.04)',
+                        border: `1px solid ${speechRate === r ? 'var(--primary)' : 'var(--border)'}`,
+                        color: speechRate === r ? '#fff' : 'var(--text-muted)',
+                        padding: '4px 8px',
+                        borderRadius: '6px',
+                        fontSize: '0.72rem',
+                        fontWeight: speechRate === r ? '600' : '400',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      {r}x
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
 
           {log.category !== 'gefiltert' && (
             <div className="feedback-section mt-8 pt-6" style={{ borderTop: '1px solid var(--border)' }}>
